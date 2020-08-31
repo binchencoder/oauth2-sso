@@ -1,0 +1,16 @@
+server:
+  port: 9000
+
+logging:
+  level:
+    root: INFO
+    com.binchencoder.spring: INFO
+    org.springframework: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.boot.autoconfigure: INFO
+
+spring:
+  thymeleaf:
+    cache: false
