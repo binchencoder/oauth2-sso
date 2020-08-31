@@ -14,3 +14,10 @@ logging:
 spring:
   thymeleaf:
     cache: false
+  mvc:
+    log-request-details: true
+
+
+logout:
+  notifies:
+    urls:

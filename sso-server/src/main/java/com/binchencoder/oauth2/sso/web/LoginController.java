@@ -17,7 +17,6 @@ package com.binchencoder.oauth2.sso.web;
 
 import com.binchencoder.oauth2.sso.route.Routes;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
@@ -26,20 +25,20 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class LoginController {
 
-	@GetMapping(Routes.DEFAULT)
-	public String root() {
-		return "redirect:/index";
-	}
-
-	@GetMapping("/index")
-	public String index() {
-		return "index";
-	}
-
-//	@GetMapping(Routes.LOGIN)
-//	public String login() {
-//		return "login";
+  @GetMapping(Routes.DEFAULT)
+  public String root() {
+    return "index";
+  }
+//
+//	@GetMapping("/index")
+//	public String index() {
+//		return "index";
 //	}
+
+//  @GetMapping(Routes.LOGIN)
+//  public String login() {
+//    return "login";
+//  }
 
 //	@GetMapping("/login-error")
 //	public String loginError(Model model) {

@@ -19,44 +19,44 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 public class JAuthenticationEntryPoint
-	implements AuthenticationEntryPoint, AuthenticationFailureHandler {
+    implements AuthenticationEntryPoint, AuthenticationFailureHandler {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(JAuthenticationEntryPoint.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(JAuthenticationEntryPoint.class);
 
-	// ~ Instance fields
-	// ================================================================================================
-	private RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
-	private String loginPage = "/login";
-	private RequestMatcher entryPointMatcher;
+  // ~ Instance fields
+  // ================================================================================================
+  private RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
+  private String loginPage = "/";
+  private RequestMatcher entryPointMatcher;
 
-	private RequestMatcher jtokenRequestMatcher =
-		new JUidCidTokenRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.GET.toString());
+  private RequestMatcher jTokenRequestMatcher =
+      new JUidCidTokenRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.GET.toString());
 
-	public JAuthenticationEntryPoint(RequestMatcher entryPointMatcher) {
-		this.entryPointMatcher = entryPointMatcher;
-	}
+  public JAuthenticationEntryPoint(RequestMatcher entryPointMatcher) {
+    this.entryPointMatcher = entryPointMatcher;
+  }
 
-	@Override
-	public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
-		AuthenticationException exception) throws IOException, ServletException {
-		LOGGER.debug("onAuthenticationFailure authenticationException", exception);
-		if (!response.isCommitted()) {
-			request.setAttribute(WebAttributes.AUTHENTICATION_EXCEPTION, exception);
-			String dispatcherUrl = Routes.OAUTH_FAILURE;
-			if (jtokenRequestMatcher.matches(request)) {
-				dispatcherUrl = Routes.OAUTH_FAILURE_HTML;
-			}
-			RequestDispatcher dispatcher = request.getRequestDispatcher(dispatcherUrl);
-			dispatcher.forward(request, response);
-		}
-	}
+  @Override
+  public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
+      AuthenticationException exception) throws IOException, ServletException {
+    LOGGER.debug("onAuthenticationFailure authenticationException", exception);
+    if (!response.isCommitted()) {
+      request.setAttribute(WebAttributes.AUTHENTICATION_EXCEPTION, exception);
+      String dispatcherUrl = Routes.OAUTH_FAILURE;
+      if (jTokenRequestMatcher.matches(request)) {
+        dispatcherUrl = Routes.OAUTH_FAILURE_HTML;
+      }
+      RequestDispatcher dispatcher = request.getRequestDispatcher(dispatcherUrl);
+      dispatcher.forward(request, response);
+    }
+  }
 
-	@Override
-	public void commence(HttpServletRequest request, HttpServletResponse response,
-		AuthenticationException authException) throws IOException, ServletException {
-		LOGGER.debug("commence authenticationException", authException);
+  @Override
+  public void commence(HttpServletRequest request, HttpServletResponse response,
+      AuthenticationException authException) throws IOException, ServletException {
+    LOGGER.debug("commence authenticationException", authException);
 
-		// 账号停用、冻结、公司停用 等情况。 需要清理当前的 Cookie，防止进入无限循环提示。
+    // 账号停用、冻结、公司停用 等情况。 需要清理当前的 Cookie，防止进入无限循环提示。
 //    Cookie cookie = AccessTokenRepresentSecurityContextRepository
 //        .getOrNewAccessTokenCookie(request);
 //    if (StringUtils.isNotBlank(cookie.getValue())) {
@@ -65,13 +65,13 @@ public class JAuthenticationEntryPoint
 //      response.addCookie(cookie);
 //    }
 
-		if (!response.isCommitted()) {
-			if (entryPointMatcher.matches(request)) {
-				RequestDispatcher dispatcher = request.getRequestDispatcher(Routes.OAUTH_LOGIN);
-				dispatcher.forward(request, response);
-			} else {
-				redirectStrategy.sendRedirect(request, response, loginPage);
-			}
-		}
-	}
+    if (!response.isCommitted()) {
+      if (entryPointMatcher.matches(request)) {
+        RequestDispatcher dispatcher = request.getRequestDispatcher(Routes.OAUTH_LOGIN);
+        dispatcher.forward(request, response);
+      } else {
+        redirectStrategy.sendRedirect(request, response, loginPage);
+      }
+    }
+  }
 }
