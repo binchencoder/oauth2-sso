@@ -23,9 +23,9 @@ import org.springframework.util.StringUtils;
 
 public class JUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
-	public static final String IDENTIFY_CODE = "identifyCode";
-	private static final Logger LOGGER = LoggerFactory
-		.getLogger(JUsernamePasswordAuthenticationFilter.class);
+	private static final Logger LOGGER =
+		LoggerFactory.getLogger(JUsernamePasswordAuthenticationFilter.class);
+
 	private AuthenticationFailureCountingService authenticationFailureCountingService;
 
 	private String tokenParameter = "token";
