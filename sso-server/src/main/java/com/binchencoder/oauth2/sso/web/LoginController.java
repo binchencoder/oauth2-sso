@@ -25,10 +25,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class LoginController {
 
-  @GetMapping(Routes.DEFAULT)
-  public String root() {
-    return "index";
-  }
+//  @GetMapping(Routes.DEFAULT)
+//  public String root() {
+//    return "index";
+//  }
 //
 //	@GetMapping("/index")
 //	public String index() {

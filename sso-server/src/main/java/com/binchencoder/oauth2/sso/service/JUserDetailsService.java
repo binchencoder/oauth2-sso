@@ -10,29 +10,30 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 public class JUserDetailsService implements UserDetailsService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(JUserDetailsService.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(JUserDetailsService.class);
 
-  private PasswordEncoder passwordEncoder;
+	private PasswordEncoder passwordEncoder;
 
-  public JUserDetailsService(PasswordEncoder _passwordEncoder) {
-    this.passwordEncoder = _passwordEncoder;
-  }
+	public JUserDetailsService(PasswordEncoder _passwordEncoder) {
+		this.passwordEncoder = _passwordEncoder;
+	}
 
-  @Override
-  public JUserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    LOGGER.info("JUserDetailsService#loadUserByUsername {}", username);
+	@Override
+	public JUserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		LOGGER.info("JUserDetailsService#loadUserByUsername {}", username);
 
-    if (username.equals("user1")) {
-      // TODO(chenbin) Load user from db
-      UserDetails ud = User.withUsername("user1")
-          .password(passwordEncoder.encode("password"))
-          .roles("USER")
-          .build();
+		if (username.equals("user1")) {
+			// TODO(chenbin) Load user from db
+			UserDetails ud = User.withUsername("user1")
+//				.password(passwordEncoder.encode("password"))
+				.password("password")
+				.roles("USER")
+				.build();
 
-      JUserDetails jUser = new JUserDetails(179, 10, ud.getPassword(), ud.getUsername());
-      return jUser;
-    }
+			JUserDetails jUser = new JUserDetails(179, 10, ud.getPassword(), ud.getUsername());
+			return jUser;
+		}
 
-    throw new UsernameNotFoundException("访问不到帐户数据,帐号:" + username);
-  }
+		throw new UsernameNotFoundException("访问不到帐户数据,帐号:" + username);
+	}
 }

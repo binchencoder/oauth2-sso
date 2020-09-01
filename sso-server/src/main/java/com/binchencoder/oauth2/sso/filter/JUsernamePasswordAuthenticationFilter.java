@@ -71,7 +71,7 @@ public class JUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthe
 		String password = obtainPassword(request);
 		String token = obtainToken(request);
 
-		// 检测 password 为空才验证 username + token，防止 url 带有 token 无法表单登录。
+		// 检测 password 为空才验证 username + token, 防止 url 带有 token 无法表单登录.
 		if (StringUtils.isEmpty(password) && StringUtils.isEmpty(token)) {
 			if (username == null) {
 				username = "";

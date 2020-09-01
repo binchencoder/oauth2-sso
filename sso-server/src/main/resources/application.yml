@@ -21,3 +21,8 @@ spring:
 logout:
   notifies:
     urls:
+
+login:
+  success:
+    default:
+      target: http://localhost:8080/

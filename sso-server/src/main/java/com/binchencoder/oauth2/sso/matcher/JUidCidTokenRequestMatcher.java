@@ -4,6 +4,7 @@ import com.binchencoder.oauth2.sso.authentication.JUidCidTokenAuthenticationToke
 import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.MultiValueMap;
@@ -44,7 +45,7 @@ public class JUidCidTokenRequestMatcher implements RequestMatcher {
 
 	@Override
 	public boolean matches(HttpServletRequest request) {
-		if (!request.getMethod().toUpperCase().equals("GET")) {
+		if (!request.getMethod().toUpperCase().equals(HttpMethod.GET.toString())) {
 			return false;
 		}
 

@@ -21,6 +21,7 @@ import com.binchencoder.oauth2.sso.service.AuthenticationFailureCountingService;
 import com.binchencoder.oauth2.sso.service.JUserDetails;
 import java.awt.Color;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -30,6 +31,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.WebAttributes;
@@ -37,6 +40,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -55,6 +59,37 @@ public class AuthorizationController {
 
 	@Autowired
 	private AuthenticationFailureCountingService authenticationFailureCountingService;
+
+	@Value("${login.success.default.target}")
+	private String defaultLoginSuccessTarget;
+
+	/**
+	 * 表单登录页: <br/>
+	 *
+	 * 1. 已经登录用户重定向到默认页
+	 *
+	 * 2. 未登录用户，展示不同登录页
+	 */
+	@RequestMapping(value = Routes.DEFAULT, method = RequestMethod.GET)
+	public String index(HttpServletRequest request, HttpServletResponse response,
+		Authentication authentication, @RequestParam(required = false, defaultValue = "0") long uid,
+		Model model) {
+		LOGGER.info("Authentication {}", authentication);
+		if (authentication != null
+			&& (authentication.getPrincipal() instanceof JUserDetails)) { // 已经登录用户
+			LOGGER.info("Redirect to {}", defaultLoginSuccessTarget);
+			return "redirect:" + defaultLoginSuccessTarget;
+		}
+
+		model.addAttribute("showIdentifyCode",
+			authenticationFailureCountingService.isNeedCheckIdentifyCode(request, response));
+		if (uid != 0) {
+			model.addAttribute("uid", uid);
+		}
+
+		LOGGER.info("To page {}", Routes.LOGIN_DEFAULT);
+		return Routes.LOGIN_DEFAULT;
+	}
 
 	@RequestMapping({Routes.OAUTH_LOGIN, Routes.OAUTH_FAILURE_HTML})
 	public String getOAuthLogin(HttpServletRequest request, HttpServletResponse response,
@@ -78,8 +113,14 @@ public class AuthorizationController {
 			model.addAttribute("error", errorMsg);
 		}
 
-//    return Routes.LOGIN_URL + display;
-		return Routes.LOGIN;
+		return Routes.LOGIN_URL + display;
+	}
+
+	@RequestMapping(Routes.OAUTH_SUCCESS)
+	@ResponseBody
+	public Map<String, Boolean> getOAuthSuccess() {
+		Map<String, Boolean> ret = Collections.singletonMap("ok", true);
+		return ret;
 	}
 
 	@RequestMapping(Routes.OAUTH_FAILURE)
