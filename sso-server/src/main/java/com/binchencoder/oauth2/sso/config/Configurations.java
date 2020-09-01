@@ -56,7 +56,7 @@ public class Configurations {
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 			.authorizationGrantType(AuthorizationGrantType.PASSWORD)
-			.redirectUri("http://localhost:8080/")
+			.redirectUri("http://localhost:8080")
 //        .redirectUris(uris -> uris.addAll(redirectUris))
 			.scope("message.read")
 			.scope("message.write")
