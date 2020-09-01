@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,6 +23,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
@@ -36,6 +42,27 @@ public class Configurations {
 
 	@Autowired
 	private Environment env;
+
+	@Bean
+	public RegisteredClientRepository registeredClientRepository() {
+//    Set<String> redirectUris = new HashSet<>(2);
+//    redirectUris.add("http://localhost:8080");
+//    redirectUris.add("http://localhost:8080/authorized");
+
+		RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
+			.clientId("messaging-client")
+			.clientSecret("secret")
+			.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
+			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+			.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+			.redirectUri("http://localhost:8080/")
+//        .redirectUris(uris -> uris.addAll(redirectUris))
+			.scope("message.read")
+			.scope("message.write")
+			.build();
+		return new InMemoryRegisteredClientRepository(registeredClient);
+	}
 
 	@Bean
 	public NotifyLogoutSuccessHandler notifyLogoutSuccessHandler(

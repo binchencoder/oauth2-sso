@@ -31,7 +31,6 @@ import com.binchencoder.oauth2.sso.service.AuthenticationFailureCountingService;
 import com.binchencoder.oauth2.sso.service.JUserDetailsService;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -47,12 +46,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.keys.KeyManager;
 import org.springframework.security.crypto.keys.StaticKeyGeneratingKeyManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.web.access.ExceptionTranslationFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
@@ -171,29 +165,6 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 //
 //		return new ProviderManager(providers);
 //	}
-
-	// @formatter:off
-	@Bean
-	public RegisteredClientRepository registeredClientRepository() {
-//    Set<String> redirectUris = new HashSet<>(2);
-//    redirectUris.add("http://localhost:8080");
-//    redirectUris.add("http://localhost:8080/authorized");
-
-		RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-			.clientId("messaging-client")
-			.clientSecret("secret")
-			.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
-			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-			.authorizationGrantType(AuthorizationGrantType.PASSWORD)
-			.redirectUri("http://localhost:8080")
-//        .redirectUris(uris -> uris.addAll(redirectUris))
-			.scope("message.read")
-			.scope("message.write")
-			.build();
-		return new InMemoryRegisteredClientRepository(registeredClient);
-	}
-	// @formatter:on
 
 	@Bean
 	public KeyManager keyManager() {
