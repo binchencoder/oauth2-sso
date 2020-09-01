@@ -55,6 +55,13 @@ public class OAuth2LoginController {
     return "index";
   }
 
+  @GetMapping(value = "/authorize", params = "grant_type=authorization_code")
+  public String authorization_code_grant(Model model) {
+    String[] messages = retrieveMessages("messaging-client-auth-code");
+    model.addAttribute("messages", messages);
+    return "index";
+  }
+
   @GetMapping("/authorized")    // registered redirect_uri for authorization_code
   public String authorized(Model model) {
     String[] messages = retrieveMessages("messaging-client-auth-code");
