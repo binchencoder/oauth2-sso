@@ -4,7 +4,7 @@ server:
 logging:
   level:
     root: INFO
-    com.binchencoder.spring.security: INFO
+    com.binchencoder.oauth2: INFO
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
     org.springframework.security.oauth2: DEBUG

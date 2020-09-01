@@ -35,9 +35,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
@@ -89,7 +87,7 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-		auth.userDetailsService(userDetailsService()).passwordEncoder(passwordEncoder());
+		auth.authenticationProvider(this.authenticationProvider());
 	}
 
 	@Override
@@ -153,26 +151,26 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 			// 一键登录 --> 使可以被异常捕获
 			.addFilterAfter(getJUidCidTokenAuthenticationFilter(sessionStrategies),
 				jUsernamePasswordAuthenticationFilter.getClass())
-			.apply(authorizationServerConfigurer)
-		;
+			.apply(authorizationServerConfigurer);
 
+		http.anonymous(); // 允许配置匿名用户
 		http.csrf().disable(); // 关跨域保护
 		http.headers().frameOptions().disable();
 		// @formatter:on
 	}
 
-	@Override
-	public UserDetailsService userDetailsServiceBean() throws Exception {
-		return userDetailsService();
-	}
-
-	@Override
-	public AuthenticationManager authenticationManagerBean() throws Exception {
-		List<AuthenticationProvider> providers = new ArrayList<>();
-		providers.add(authenticationProvider());
-
-		return new ProviderManager(providers);
-	}
+//	@Override
+//	public UserDetailsService userDetailsServiceBean() throws Exception {
+//		return userDetailsService();
+//	}
+//
+//	@Override
+//	public AuthenticationManager authenticationManagerBean() throws Exception {
+//		List<AuthenticationProvider> providers = new ArrayList<>();
+//		providers.add(authenticationProvider());
+//
+//		return new ProviderManager(providers);
+//	}
 
 	// @formatter:off
 	@Bean
@@ -203,10 +201,11 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 	}
 
 	@Bean
-	public AuthenticationProvider authenticationProvider() {
-		AuthenticationProvider authenticationProvider = new JUserNamePasswordAuthenticationProvider(
+	public DaoAuthenticationProvider authenticationProvider() {
+		DaoAuthenticationProvider authProvider = new JUserNamePasswordAuthenticationProvider(
 			userDetailsService());
-		return authenticationProvider;
+		authProvider.setPasswordEncoder(passwordEncoder());
+		return authProvider;
 	}
 
 	@Bean

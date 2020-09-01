@@ -27,7 +27,7 @@ public class JUserDetailsService implements UserDetailsService {
 			UserDetails ud = User.withUsername("user1")
 //				.password(passwordEncoder.encode("password"))
 				.password("password")
-				.roles("USER")
+				.roles("ANONYMOUS")
 				.build();
 
 			JUserDetails jUser = new JUserDetails(179, 10, ud.getPassword(), ud.getUsername());

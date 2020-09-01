@@ -1,23 +1,24 @@
 package com.binchencoder.oauth2.sso.authentication;
 
 import org.springframework.security.authentication.AccountExpiredException;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-public class JUserNamePasswordAuthenticationProvider implements AuthenticationProvider {
+public class JUserNamePasswordAuthenticationProvider extends DaoAuthenticationProvider {
 
 	private final UserDetailsService userDetailsService;
 
 	public JUserNamePasswordAuthenticationProvider(UserDetailsService userDetailsService) {
 		this.userDetailsService = userDetailsService;
+		super.setUserDetailsService(userDetailsService);
 	}
 
 	@Override
