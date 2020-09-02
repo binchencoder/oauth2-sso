@@ -143,6 +143,7 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 //			.loginPage(Routes.LOGIN)
 //			.failureUrl("/login-handler")
 //			.permitAll().and()
+			.oauth2Login().and()
 			.exceptionHandling() // 3. -> 安全异常处理 LogoutFilter 之后，确保所有登录异常纳入异常处理
 			.authenticationEntryPoint(jAuthenticationEntryPoint)
 			.accessDeniedHandler(jAccessDeniedHandler).and().csrf()
