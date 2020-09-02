@@ -76,228 +76,223 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @EnableWebSecurity
 public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdapter {
 
-  @Autowired
-  private NotifyLogoutSuccessHandler notifyLogoutSuccessHandler;
+	@Autowired
+	private NotifyLogoutSuccessHandler notifyLogoutSuccessHandler;
 
-  @Autowired
-  @Qualifier("languageCleanLogoutHandler")
-  private LogoutHandler languageCleanLogoutHandler;
+	@Autowired
+	@Qualifier("languageCleanLogoutHandler")
+	private LogoutHandler languageCleanLogoutHandler;
 
-  @Autowired
-  private JAuthenticationEntryPoint jAuthenticationEntryPoint;
+	@Autowired
+	private JAuthenticationEntryPoint jAuthenticationEntryPoint;
 
-  @Autowired
-  private JAccessDeniedHandler jAccessDeniedHandler;
+	@Autowired
+	private JAccessDeniedHandler jAccessDeniedHandler;
 
-  @Autowired
-  private AccessTokenRepresentSecurityContextRepository accessTokenRepresentSecurityContextRepository;
+	@Autowired
+	private AccessTokenRepresentSecurityContextRepository accessTokenRepresentSecurityContextRepository;
 
-  @Autowired
-  private AuthenticationFailureCountingService authenticationFailureCountingService;
+	@Autowired
+	private AuthenticationFailureCountingService authenticationFailureCountingService;
 
-  @Override
-  protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-    auth.authenticationProvider(this.authenticationProvider());
-  }
+	@Override
+	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+		auth.authenticationProvider(this.authenticationProvider());
+	}
 
-  @Override
-  public void configure(WebSecurity web) {
-    web
-        .ignoring()
-        .antMatchers("/webjars/**");
-  }
+	@Override
+	public void configure(WebSecurity web) {
+		web
+			.ignoring()
+			.antMatchers("/webjars/**");
+	}
 
-  @Override
-  protected void configure(HttpSecurity http) throws Exception {
-    http.setSharedObject(SecurityContextRepository.class,
-        accessTokenRepresentSecurityContextRepository);
-    List<SessionAuthenticationStrategy> sessionStrategies = new ArrayList<>(1);
-    sessionStrategies.add((authentication, request, response) -> {
-      String accessToken = authentication.getCredentials().toString();
-      Cookie cookie =
-          AccessTokenRepresentSecurityContextRepository.getOrNewAccessTokenCookie(request);
-      String saveInfo = request.getParameter("saveinfo");
-      boolean persist =
-          StringUtils.isNotBlank(saveInfo) && !"false".equalsIgnoreCase(saveInfo.trim());
-      if (!cookie.getValue().equals(accessToken) || persist) {
-        cookie.setValue(accessToken);
-        if (persist) {
-          cookie.setMaxAge(30 * 24 * 60 * 60);
-        }
+	@Override
+	protected void configure(HttpSecurity http) throws Exception {
+		http.setSharedObject(SecurityContextRepository.class,
+			accessTokenRepresentSecurityContextRepository);
+		List<SessionAuthenticationStrategy> sessionStrategies = new ArrayList<>(1);
+		sessionStrategies.add((authentication, request, response) -> {
+			String accessToken = authentication.getCredentials().toString();
+			Cookie cookie =
+				AccessTokenRepresentSecurityContextRepository.getOrNewAccessTokenCookie(request);
+			String saveInfo = request.getParameter("saveinfo");
+			boolean persist =
+				StringUtils.isNotBlank(saveInfo) && !"false".equalsIgnoreCase(saveInfo.trim());
+			if (!cookie.getValue().equals(accessToken) || persist) {
+				cookie.setValue(accessToken);
+				if (persist) {
+					cookie.setMaxAge(30 * 24 * 60 * 60);
+				}
 
-        response.addCookie(cookie);
-      }
-    });
+				response.addCookie(cookie);
+			}
+		});
 
-    JUsernamePasswordAuthenticationFilter jUsernamePasswordAuthenticationFilter =
-        getJUsernamePasswordAuthenticationFilter(sessionStrategies);
-    OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-        new OAuth2AuthorizationServerConfigurer<>();
+		JUsernamePasswordAuthenticationFilter jUsernamePasswordAuthenticationFilter =
+			this.getJUsernamePasswordAuthenticationFilter(sessionStrategies);
+		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+			new OAuth2AuthorizationServerConfigurer<>();
 
-    // @formatter:off
-    http
+		// @formatter:off
+		http
 //			.requestMatcher(new OrRequestMatcher(authorizationServerConfigurer.getEndpointMatchers()))
-        .authorizeRequests()
-        .antMatchers(Routes.DEFAULT, Routes.LOGIN).permitAll().anyRequest().authenticated().and()
+			.authorizeRequests()
+			.antMatchers(Routes.DEFAULT, Routes.LOGIN).permitAll().anyRequest().authenticated().and()
 //			.formLogin()
 //			.loginPage(Routes.LOGIN)
 //			.failureUrl("/login-handler")
 //			.permitAll().and()
-        .exceptionHandling() // 3. -> 安全异常处理 LogoutFilter 之后，确保所有登录异常纳入异常处理
-        .authenticationEntryPoint(jAuthenticationEntryPoint)
-        .accessDeniedHandler(jAccessDeniedHandler).and().csrf()
-        .requireCsrfProtectionMatcher(new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE)).disable()
-        .logout().logoutSuccessHandler(notifyLogoutSuccessHandler).logoutUrl(Routes.LOGOUT)
-        .addLogoutHandler(languageCleanLogoutHandler).and()
-        // 认证服务内部异常处理
-        .addFilterBefore(getJAuthenticationServiceExceptionFilter(),
-            ExceptionTranslationFilter.class)
-        // 已经登录帐号冲突检测
-        .addFilterAfter(getJRequiredUserCheckFilter(), ExceptionTranslationFilter.class)
-        // 账号登陆记录
-        .addFilterAfter(getJLogoutRecordFilter(), getJRequiredUserCheckFilter().getClass())
-        // 表单登录 --> 使可以被异常捕获
-        .addFilterAfter(jUsernamePasswordAuthenticationFilter,
-            getJRequiredUserCheckFilter().getClass())
-        // 一键登录 --> 使可以被异常捕获
-        .addFilterAfter(getJUidCidTokenAuthenticationFilter(sessionStrategies),
-            jUsernamePasswordAuthenticationFilter.getClass())
-        .apply(authorizationServerConfigurer);
+			.exceptionHandling() // 3. -> 安全异常处理 LogoutFilter 之后，确保所有登录异常纳入异常处理
+			.authenticationEntryPoint(jAuthenticationEntryPoint)
+			.accessDeniedHandler(jAccessDeniedHandler).and().csrf()
+			.requireCsrfProtectionMatcher(new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE)).disable()
+			.logout().logoutSuccessHandler(notifyLogoutSuccessHandler).logoutUrl(Routes.LOGOUT)
+			.addLogoutHandler(languageCleanLogoutHandler).and()
+			// 认证服务内部异常处理
+			.addFilterBefore(getJAuthenticationServiceExceptionFilter(),
+				ExceptionTranslationFilter.class)
+			// 已经登录帐号冲突检测
+			.addFilterAfter(getJRequiredUserCheckFilter(), ExceptionTranslationFilter.class)
+			// 账号登陆记录
+			.addFilterAfter(getJLogoutRecordFilter(), getJRequiredUserCheckFilter().getClass())
+			// 表单登录 --> 使可以被异常捕获
+			.addFilterAfter(jUsernamePasswordAuthenticationFilter,
+				getJRequiredUserCheckFilter().getClass())
+			// 一键登录 --> 使可以被异常捕获
+			.addFilterAfter(getJUidCidTokenAuthenticationFilter(sessionStrategies),
+				jUsernamePasswordAuthenticationFilter.getClass())
+			.apply(authorizationServerConfigurer);
 
-    http.anonymous(); // 允许配置匿名用户
-    http.csrf().disable(); // 关跨域保护
-    http.headers().frameOptions().disable();
-    // @formatter:on
-  }
+//		http.anonymous(); // 允许配置匿名用户
+		http.csrf().disable(); // 关跨域保护
+		http.headers().frameOptions().disable();
+		// @formatter:on
+	}
 
-//	@Override
-//	public UserDetailsService userDetailsServiceBean() throws Exception {
-//		return userDetailsService();
-//	}
+	@Override
+	@Bean
+	public AuthenticationManager authenticationManagerBean() throws Exception {
+		AuthenticationManager acture = super.authenticationManagerBean();
+		return authentication -> {
+			Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
+			Authentication authResult = acture.authenticate(authentication);
 
-  @Override
-  @Bean
-  public AuthenticationManager authenticationManagerBean() throws Exception {
-    AuthenticationManager acture = super.authenticationManagerBean();
-    return authentication -> {
-      Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
-      Authentication authResult = acture.authenticate(authentication);
+			// 检测登录后的用户与期望的用户是否匹配。
+			if (authentication != null && authResult != null
+				&& authentication.getDetails() instanceof JWebAuthenticationDetails) {
+				JWebAuthenticationDetails webDetails =
+					(JWebAuthenticationDetails) authentication.getDetails();
 
-      // 检测登录后的用户与期望的用户是否匹配。
-      if (authentication != null && authResult != null
-          && authentication.getDetails() instanceof JWebAuthenticationDetails) {
-        JWebAuthenticationDetails webDetails =
-            (JWebAuthenticationDetails) authentication.getDetails();
+				// 纯企业账号登录
+				if (authResult.getPrincipal() instanceof JUserDetails) {
+					JUserDetails details = (JUserDetails) authResult.getPrincipal();
+					if (!webDetails.matchUid(details.getUserID())) {
+						throw new NotRequiredUserAuthenticationException(
+							"Authentication user not match required user");
+					}
+				}
+			}
 
-        // 纯企业账号登录
-        if (authResult.getPrincipal() instanceof JUserDetails) {
-          JUserDetails details = (JUserDetails) authResult.getPrincipal();
-          if (!webDetails.matchUid(details.getUserID())) {
-            throw new NotRequiredUserAuthenticationException(
-                "Authentication user not match required user");
-          }
-        }
-      }
+			if (existingAuth != null && authResult != null
+				&& existingAuth.isAuthenticated()
+				&& authResult.isAuthenticated()
+				&& !(existingAuth instanceof AnonymousAuthenticationToken)) {
+				if (existingAuth.getPrincipal() instanceof JUserDetails
+					&& authResult.getPrincipal() instanceof JUserDetails
+					&& !Objects.equals(authResult.getName(), existingAuth.getName())) {
+					throw new AnotherUserLoginedAccessDeniedException(
+						"Authentication not match current user", existingAuth, authResult);
+				}
+			}
 
-      if (existingAuth != null && authResult != null
-          && existingAuth.isAuthenticated()
-          && authResult.isAuthenticated()
-          && !(existingAuth instanceof AnonymousAuthenticationToken)) {
-        if (existingAuth.getPrincipal() instanceof JUserDetails
-            && authResult.getPrincipal() instanceof JUserDetails
-            && !Objects.equals(authResult.getName(), existingAuth.getName())) {
-          throw new AnotherUserLoginedAccessDeniedException(
-              "Authentication not match current user", existingAuth, authResult);
-        }
-      }
+			// // 一键登录成功清理token 个人账号token有复用，不复用时取消注释
+			// if (authentication instanceof JUidCidTokenAuthenticationToken) {
+			// tokenService.removeToken(((JUidCidTokenAuthenticationToken) authentication).getToken());
+			// }
 
-      // // 一键登录成功清理token 个人账号token有复用，不复用时取消注释
-      // if (authentication instanceof JUidCidTokenAuthenticationToken) {
-      // tokenService.removeToken(((JUidCidTokenAuthenticationToken) authentication).getToken());
-      // }
-
-      // 账号冲突登陆成功清理token
+			// 账号冲突登陆成功清理token
 //        if (authentication instanceof JUsernameTokenAuthenticationToken) {
 //          tokenService.removeToken(authentication.getCredentials().toString());
 //        }
 
-      return authResult;
-    };
-  }
+			return authResult;
+		};
+	}
 
-  @Bean
-  public KeyManager keyManager() {
-    return new StaticKeyGeneratingKeyManager();
-  }
+	@Bean
+	public KeyManager keyManager() {
+		return new StaticKeyGeneratingKeyManager();
+	}
 
-  @Bean
-  public DaoAuthenticationProvider authenticationProvider() {
-    DaoAuthenticationProvider authProvider = new JUserNamePasswordAuthenticationProvider(
-        userDetailsService());
-    authProvider.setPasswordEncoder(passwordEncoder());
-    return authProvider;
-  }
+	@Bean
+	public DaoAuthenticationProvider authenticationProvider() {
+		DaoAuthenticationProvider authProvider = new JUserNamePasswordAuthenticationProvider(
+			userDetailsService());
+		authProvider.setPasswordEncoder(passwordEncoder());
+		return authProvider;
+	}
 
-  @Bean
-  public UserDetailsService userDetailsService() {
-    return new JUserDetailsService(passwordEncoder());
-  }
+	@Bean
+	public UserDetailsService userDetailsService() {
+		return new JUserDetailsService(passwordEncoder());
+	}
 
-  @Bean
-  public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
-  }
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
 
-  // 表单登录
-  private JUsernamePasswordAuthenticationFilter getJUsernamePasswordAuthenticationFilter(
-      List<SessionAuthenticationStrategy> sessionStrategies) throws Exception {
-    JUsernamePasswordAuthenticationFilter formLogin = new JUsernamePasswordAuthenticationFilter();
-    JForwardAuthenticationSuccessHandler jForwardAuthenticationSuccessHandler =
-        new JForwardAuthenticationSuccessHandler();
-    // TODO(binchencoder): Login success kafka message
+	// 表单登录
+	private JUsernamePasswordAuthenticationFilter getJUsernamePasswordAuthenticationFilter(
+		List<SessionAuthenticationStrategy> sessionStrategies) throws Exception {
+		JUsernamePasswordAuthenticationFilter formLogin = new JUsernamePasswordAuthenticationFilter();
+		JForwardAuthenticationSuccessHandler jForwardAuthenticationSuccessHandler =
+			new JForwardAuthenticationSuccessHandler();
+		// TODO(binchencoder): Login success kafka message
 //    jForwardAuthenticationSuccessHandler.setKafkaStorageAdapter(kafkaStorageAdapter);
-    formLogin.setAuthenticationSuccessHandler(jForwardAuthenticationSuccessHandler);
-    formLogin.setAuthenticationFailureCountingService(authenticationFailureCountingService);
-    formLogin.setRequiresAuthenticationRequestMatcher(
-        new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.POST.toString()));
-    formLogin.setAuthenticationManager(authenticationManagerBean());
-    formLogin.setUsernameParameter(OAuth2ParameterNames.USERNAME);
-    formLogin.setPasswordParameter(OAuth2ParameterNames.PASSWORD);
-    formLogin.setAuthenticationFailureHandler(jAuthenticationEntryPoint);
-    formLogin.setSessionAuthenticationStrategy(
-        new CompositeSessionAuthenticationStrategy(sessionStrategies));
-    return formLogin;
-  }
+		formLogin.setAuthenticationSuccessHandler(jForwardAuthenticationSuccessHandler);
+		formLogin.setAuthenticationFailureCountingService(authenticationFailureCountingService);
+		formLogin.setRequiresAuthenticationRequestMatcher(
+			new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.POST.toString()));
+		formLogin.setAuthenticationManager(authenticationManagerBean());
+		formLogin.setUsernameParameter(OAuth2ParameterNames.USERNAME);
+		formLogin.setPasswordParameter(OAuth2ParameterNames.PASSWORD);
+		formLogin.setAuthenticationFailureHandler(jAuthenticationEntryPoint);
+		formLogin.setSessionAuthenticationStrategy(
+			new CompositeSessionAuthenticationStrategy(sessionStrategies));
+		return formLogin;
+	}
 
-  // 退出登录记录生成器
-  private JLogoutRecordFilter getJLogoutRecordFilter() {
-    return new JLogoutRecordFilter(
-        new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.GET.toString()));
-  }
+	// 退出登录记录生成器
+	private JLogoutRecordFilter getJLogoutRecordFilter() {
+		return new JLogoutRecordFilter(
+			new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.GET.toString()));
+	}
 
-  // 一键登录
-  private JUidCidTokenAuthenticationFilter getJUidCidTokenAuthenticationFilter(
-      List<SessionAuthenticationStrategy> sessionStrategies) throws Exception {
-    JUidCidTokenAuthenticationFilter jTokenLogin = new JUidCidTokenAuthenticationFilter();
-    jTokenLogin.setAuthenticationManager(authenticationManagerBean());
-    jTokenLogin.setAuthenticationFailureHandler(jAuthenticationEntryPoint);
-    jTokenLogin.setSessionAuthenticationStrategy(
-        new CompositeSessionAuthenticationStrategy(sessionStrategies));
-    return jTokenLogin;
-  }
+	// 一键登录
+	private JUidCidTokenAuthenticationFilter getJUidCidTokenAuthenticationFilter(
+		List<SessionAuthenticationStrategy> sessionStrategies) throws Exception {
+		JUidCidTokenAuthenticationFilter jTokenLogin = new JUidCidTokenAuthenticationFilter();
+		jTokenLogin.setAuthenticationManager(authenticationManagerBean());
+		jTokenLogin.setAuthenticationFailureHandler(jAuthenticationEntryPoint);
+		jTokenLogin.setSessionAuthenticationStrategy(
+			new CompositeSessionAuthenticationStrategy(sessionStrategies));
+		return jTokenLogin;
+	}
 
-  private JAuthenticationServiceExceptionFilter getJAuthenticationServiceExceptionFilter() {
-    JAuthenticationServiceExceptionFilter serviceExceptionFilter =
-        new JAuthenticationServiceExceptionFilter();
-    serviceExceptionFilter.setAuthenticationEntryPoint(jAuthenticationEntryPoint);
-    return serviceExceptionFilter;
-  }
+	private JAuthenticationServiceExceptionFilter getJAuthenticationServiceExceptionFilter() {
+		JAuthenticationServiceExceptionFilter serviceExceptionFilter =
+			new JAuthenticationServiceExceptionFilter();
+		serviceExceptionFilter.setAuthenticationEntryPoint(jAuthenticationEntryPoint);
+		return serviceExceptionFilter;
+	}
 
-  private JRequiredUserCheckFilter getJRequiredUserCheckFilter() {
-    return new JRequiredUserCheckFilter(new AndRequestMatcher(
-        new OrRequestMatcher(
-            new AntPathRequestMatcher(Routes.DEFAULT, RequestMethod.GET.toString()),
-            new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.GET.toString())),
-        new NegatedRequestMatcher(new JUidCidTokenRequestMatcher(Routes.OAUTH_AUTHORIZE))));
-  }
+	private JRequiredUserCheckFilter getJRequiredUserCheckFilter() {
+		return new JRequiredUserCheckFilter(new AndRequestMatcher(
+			new OrRequestMatcher(
+				new AntPathRequestMatcher(Routes.DEFAULT, RequestMethod.GET.toString()),
+				new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.GET.toString())),
+			new NegatedRequestMatcher(new JUidCidTokenRequestMatcher(Routes.OAUTH_AUTHORIZE))));
+	}
 }

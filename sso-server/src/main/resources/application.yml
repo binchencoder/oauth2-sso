@@ -13,11 +13,12 @@ logging:
     org.springframework.boot.autoconfigure: INFO
 
 spring:
+  application:
+    name: oauth2-sso
   thymeleaf:
     cache: false
   mvc:
     log-request-details: true
-
 
 logout:
   notifies:

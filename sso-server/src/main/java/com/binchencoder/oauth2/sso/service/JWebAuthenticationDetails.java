@@ -1,8 +1,8 @@
 package com.binchencoder.oauth2.sso.service;
 
 import javax.servlet.http.HttpServletRequest;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
-import org.springframework.util.StringUtils;
 
 public class JWebAuthenticationDetails extends WebAuthenticationDetails {
 
@@ -23,7 +23,7 @@ public class JWebAuthenticationDetails extends WebAuthenticationDetails {
 	}
 
 	public boolean matchUid(String uid) {
-		if (StringUtils.isEmpty(uid)) {
+		if (StringUtils.isBlank(uid)) {
 			return false;
 		}
 

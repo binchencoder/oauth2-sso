@@ -47,8 +47,6 @@ public class JForwardAuthenticationSuccessHandler extends
 					+ " login success to DataCenter Fail.", e);
 			}
 		}
-//
-//		super.onAuthenticationSuccess(request, response, authentication);
 	}
 
 	private void sendKafkaMessage(HttpServletRequest request, long userId, long companyId) {

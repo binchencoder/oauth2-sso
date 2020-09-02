@@ -1,5 +1,6 @@
 package com.binchencoder.oauth2.sso.filter;
 
+import com.binchencoder.oauth2.sso.authentication.JUserNamePasswordAuthenticationProvider;
 import com.binchencoder.oauth2.sso.authentication.JUsernameTokenAuthenticationToken;
 import com.binchencoder.oauth2.sso.exception.IdentifyCodeErrorAuthenticationException;
 import com.binchencoder.oauth2.sso.exception.NeedIdentifyCodeAuthenticationException;
@@ -11,6 +12,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,7 +21,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 public class JUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
@@ -51,15 +52,15 @@ public class JUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthe
 		LOGGER
 			.debug("requestURI:{}, contextPath:{}", request.getRequestURI(), request.getContextPath());
 
-//    String saveInfo = request.getParameter("saveinfo");
-//    boolean persist =
-//        StringUtils.isNotBlank(saveInfo) && !"false".equalsIgnoreCase(saveInfo.trim());
-//    JGrpcUsernamePasswordAuthenticationProvider.PersistSession.set(persist);
+		String saveInfo = request.getParameter("saveinfo");
+		boolean persist =
+			StringUtils.isNotBlank(saveInfo) && !"false".equalsIgnoreCase(saveInfo.trim());
+		JUserNamePasswordAuthenticationProvider.PERSIST_SESSION.set(persist);
 
 		try {
 			super.doFilter(req, res, chain);
 		} finally {
-//      JGrpcUsernamePasswordAuthenticationProvider.PersistSession.remove();
+			JUserNamePasswordAuthenticationProvider.PERSIST_SESSION.remove();
 		}
 	}
 
