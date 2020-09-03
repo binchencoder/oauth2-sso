@@ -60,9 +60,11 @@ import org.springframework.security.crypto.keys.StaticKeyGeneratingKeyManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.web.access.ExceptionTranslationFilter;
+import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -137,7 +139,7 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 
     // @formatter:off
 		http
-//			.requestMatcher(new OrRequestMatcher(authorizationServerConfigurer.getEndpointMatchers()))
+      .requestMatcher(new OrRequestMatcher(authorizationServerConfigurer.getEndpointMatchers()))
 			.authorizeRequests()
 			.antMatchers(Routes.DEFAULT, Routes.LOGIN).permitAll().anyRequest().authenticated().and()
 //			.formLogin()
@@ -155,6 +157,7 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 			// 认证服务内部异常处理
 			.addFilterBefore(getJAuthenticationServiceExceptionFilter(),
 				ExceptionTranslationFilter.class)
+//      .addFilter(getBasicAuthenticationFilter())
 			// 已经登录帐号冲突检测
 			.addFilterAfter(getJRequiredUserCheckFilter(), ExceptionTranslationFilter.class)
 			// 账号登陆记录
@@ -164,7 +167,7 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 				getJRequiredUserCheckFilter().getClass())
 			// 一键登录 --> 使可以被异常捕获
 			.addFilterAfter(getJUidCidTokenAuthenticationFilter(sessionStrategies),
-				jUsernamePasswordAuthenticationFilter.getClass())
+				FilterSecurityInterceptor.class)
       .apply(authorizationServerConfigurer);
 
 //		http.anonymous(); // 允许配置匿名用户
@@ -271,6 +274,10 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
   private JLogoutRecordFilter getJLogoutRecordFilter() {
     return new JLogoutRecordFilter(
       new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.GET.toString()));
+  }
+
+  private BasicAuthenticationFilter getBasicAuthenticationFilter() throws Exception {
+    return new BasicAuthenticationFilter(this.authenticationManager());
   }
 
   // 一键登录
