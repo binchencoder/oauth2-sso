@@ -4,6 +4,7 @@ import com.binchencoder.oauth2.sso.authentication.JUserNamePasswordAuthenticatio
 import com.binchencoder.oauth2.sso.authentication.JUsernameTokenAuthenticationToken;
 import com.binchencoder.oauth2.sso.exception.IdentifyCodeErrorAuthenticationException;
 import com.binchencoder.oauth2.sso.exception.NeedIdentifyCodeAuthenticationException;
+import com.binchencoder.oauth2.sso.route.Routes;
 import com.binchencoder.oauth2.sso.service.AuthenticationFailureCountingService;
 import java.io.IOException;
 import javax.servlet.FilterChain;
@@ -20,7 +21,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.util.Assert;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 public class JUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
@@ -34,7 +37,8 @@ public class JUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthe
 	private AuthenticationFailureHandler failureHandler;
 
 	public JUsernamePasswordAuthenticationFilter() {
-		super();
+		this.setRequiresAuthenticationRequestMatcher(
+			new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.POST.toString()));
 	}
 
 	/**

@@ -25,6 +25,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
@@ -43,6 +46,14 @@ public class Configurations {
 
   @Autowired
   private Environment env;
+
+//  @Bean
+//	private ClientRegistrationRepository clientRegistrationRepository() {
+//		ClientRegistration.withRegistrationId(UUID.randomUUID().toString())
+//			.clientId("messaging-client")
+//			.clientSecret("secret")
+//  	return new InMemoryClientRegistrationRepository();
+//	}
 
   @Bean
   public RegisteredClientRepository registeredClientRepository() {
