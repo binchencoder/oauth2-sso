@@ -25,9 +25,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
@@ -57,9 +54,9 @@ public class Configurations {
 
   @Bean
   public RegisteredClientRepository registeredClientRepository() {
-//    Set<String> redirectUris = new HashSet<>(2);
-//    redirectUris.add("http://localhost:8080");
-//    redirectUris.add("http://localhost:8080/authorized");
+    Set<String> redirectUris = new HashSet<>(2);
+    redirectUris.add("http://www.baidu.com");
+    redirectUris.add("http://localhost:8080/authorized");
 
     RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
       .clientId("messaging-client")
@@ -70,8 +67,8 @@ public class Configurations {
       .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
       .authorizationGrantType(AuthorizationGrantType.PASSWORD)
       .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-      .redirectUri("http://localhost:8080/authorized")
-//        .redirectUris(uris -> uris.addAll(redirectUris))
+//      .redirectUri("http://localhost:8080/authorized")
+      .redirectUris(uris -> uris.addAll(redirectUris))
       .scope("message.read")
       .scope("message.write")
       .build();

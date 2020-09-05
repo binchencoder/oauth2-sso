@@ -87,7 +87,7 @@ public class AccessTokenRepresentSecurityContextRepository implements SecurityCo
     }
 
     cookie.setHttpOnly(true);
-    cookie.setSecure(true);
+//    cookie.setSecure(true);
     cookie.setPath(Routes.DEFAULT);
 
     return cookie;
