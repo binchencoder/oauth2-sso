@@ -87,6 +87,10 @@ public class AccessTokenRepresentSecurityContextRepository implements SecurityCo
     }
 
     cookie.setHttpOnly(true);
+    // 在 setSecure(true) 的情况下:
+    //  1. 只有https才传递到服务器端。http是不会传递的.
+    //  2. 浏览器端的cookie不会传递到服务器端.
+    //  3. 服务器端的cookie会传递到浏览器端.
 //    cookie.setSecure(true);
     cookie.setPath(Routes.DEFAULT);
 

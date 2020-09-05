@@ -45,13 +45,13 @@ public class OAuth2LoginController {
 
   @GetMapping("/")
   public String index(Model model,
-      @RegisteredOAuth2AuthorizedClient("messaging-client-auth-code") OAuth2AuthorizedClient authorizedClient,
+//      @RegisteredOAuth2AuthorizedClient("messaging-client-auth-code") OAuth2AuthorizedClient authorizedClient,
       @AuthenticationPrincipal OAuth2User oauth2User) {
-    OAuth2AccessToken accessToken = authorizedClient.getAccessToken();
+//    OAuth2AccessToken accessToken = authorizedClient.getAccessToken();
 
-    model.addAttribute("userName", oauth2User.getName());
-    model.addAttribute("clientName", authorizedClient.getClientRegistration().getClientName());
-    model.addAttribute("userAttributes", oauth2User.getAttributes());
+//    model.addAttribute("userName", oauth2User.getName());
+//    model.addAttribute("clientName", authorizedClient.getClientRegistration().getClientName());
+//    model.addAttribute("userAttributes", oauth2User.getAttributes());
     return "index";
   }
 

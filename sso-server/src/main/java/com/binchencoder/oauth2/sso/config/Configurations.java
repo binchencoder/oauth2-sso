@@ -1,5 +1,6 @@
 package com.binchencoder.oauth2.sso.config;
 
+import com.binchencoder.oauth2.sso.authentication.JUserNamePasswordAuthenticationProvider;
 import com.binchencoder.oauth2.sso.handler.JAccessDeniedHandler;
 import com.binchencoder.oauth2.sso.handler.JAuthenticationEntryPoint;
 import com.binchencoder.oauth2.sso.handler.NotifyLogoutSuccessHandler;
@@ -7,6 +8,8 @@ import com.binchencoder.oauth2.sso.resover.LogoutNotifyAddressResover;
 import com.binchencoder.oauth2.sso.route.Routes;
 import com.binchencoder.oauth2.sso.service.AccessTokenRepresentSecurityContextRepository;
 import com.binchencoder.oauth2.sso.service.AuthenticationFailureCountingService;
+import com.binchencoder.oauth2.sso.service.JOAuth2AuthorizationService;
+import com.binchencoder.oauth2.sso.service.JUserDetailsService;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -25,8 +28,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.keys.KeyManager;
+import org.springframework.security.crypto.keys.StaticKeyGeneratingKeyManager;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -44,19 +54,39 @@ public class Configurations {
   @Autowired
   private Environment env;
 
-//  @Bean
-//	private ClientRegistrationRepository clientRegistrationRepository() {
-//		ClientRegistration.withRegistrationId(UUID.randomUUID().toString())
-//			.clientId("messaging-client")
-//			.clientSecret("secret")
-//  	return new InMemoryClientRegistrationRepository();
-//	}
+  @Bean(name = "daoAuthenticationProvider")
+  public DaoAuthenticationProvider authenticationProvider() {
+    DaoAuthenticationProvider authProvider = new JUserNamePasswordAuthenticationProvider(
+      userDetailsService());
+    authProvider.setPasswordEncoder(passwordEncoder());
+    return authProvider;
+  }
+
+  @Bean
+  public OAuth2AuthorizationService jOAuth2AuthorizationService() {
+    return new JOAuth2AuthorizationService();
+  }
+
+  @Bean
+  public UserDetailsService userDetailsService() {
+    return new JUserDetailsService(passwordEncoder());
+  }
+
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
+
+  @Bean
+  public KeyManager keyManager() {
+    return new StaticKeyGeneratingKeyManager();
+  }
 
   @Bean
   public RegisteredClientRepository registeredClientRepository() {
     Set<String> redirectUris = new HashSet<>(2);
     redirectUris.add("http://www.baidu.com");
-    redirectUris.add("http://localhost:8080/authorized");
+    redirectUris.add("http://localhost:8080/");
 
     RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
       .clientId("messaging-client")

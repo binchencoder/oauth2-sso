@@ -1,4 +1,4 @@
-package com.binchencoder.oauth2.sso.handler;
+package com.binchencoder.oauth2.client.handler;
 
 import java.util.Arrays;
 import java.util.Collections;

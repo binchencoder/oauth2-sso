@@ -15,7 +15,6 @@
  */
 package com.binchencoder.oauth2.sso.config;
 
-import com.binchencoder.oauth2.sso.authentication.JUserNamePasswordAuthenticationProvider;
 import com.binchencoder.oauth2.sso.exception.AnotherUserLoginedAccessDeniedException;
 import com.binchencoder.oauth2.sso.exception.NotRequiredUserAuthenticationException;
 import com.binchencoder.oauth2.sso.filter.JAuthenticationServiceExceptionFilter;
@@ -23,7 +22,9 @@ import com.binchencoder.oauth2.sso.filter.JLogoutRecordFilter;
 import com.binchencoder.oauth2.sso.filter.JRequiredUserCheckFilter;
 import com.binchencoder.oauth2.sso.filter.JUidCidTokenAuthenticationFilter;
 import com.binchencoder.oauth2.sso.filter.JUsernamePasswordAuthenticationFilter;
+import com.binchencoder.oauth2.sso.handler.CustomRequestEntityConverter;
 import com.binchencoder.oauth2.sso.handler.JAccessDeniedHandler;
+import com.binchencoder.oauth2.sso.handler.JAccessTokenResponseConverter;
 import com.binchencoder.oauth2.sso.handler.JAuthenticationEntryPoint;
 import com.binchencoder.oauth2.sso.handler.JForwardAuthenticationSuccessHandler;
 import com.binchencoder.oauth2.sso.handler.NotifyLogoutSuccessHandler;
@@ -32,10 +33,10 @@ import com.binchencoder.oauth2.sso.route.Routes;
 import com.binchencoder.oauth2.sso.service.AccessTokenRepresentSecurityContextRepository;
 import com.binchencoder.oauth2.sso.service.AuthenticationFailureCountingService;
 import com.binchencoder.oauth2.sso.service.JUserDetails;
-import com.binchencoder.oauth2.sso.service.JUserDetailsService;
 import com.binchencoder.oauth2.sso.service.JWebAuthenticationDetails;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import javax.servlet.http.Cookie;
@@ -45,9 +46,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
@@ -56,18 +58,18 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.keys.KeyManager;
-import org.springframework.security.crypto.keys.StaticKeyGeneratingKeyManager;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
+import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.web.access.ExceptionTranslationFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -75,6 +77,7 @@ import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * @author binchencoder
@@ -104,11 +107,18 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
   @Autowired
   private AuthenticationFailureCountingService authenticationFailureCountingService;
 
+  @Autowired
+  @Qualifier("daoAuthenticationProvider")
+  private AuthenticationProvider authenticationProvider;
+
+  @Autowired
+  private OAuth2AuthorizationService oAuth2AuthorizationService;
+
   @Override
   protected void configure(AuthenticationManagerBuilder auth) throws Exception {
     auth.eraseCredentials(false);
 
-    auth.authenticationProvider(this.authenticationProvider());
+    auth.authenticationProvider(authenticationProvider);
   }
 
   @Override
@@ -122,28 +132,10 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
   protected void configure(HttpSecurity http) throws Exception {
     http.setSharedObject(SecurityContextRepository.class,
       accessTokenRepresentSecurityContextRepository);
+    http.setSharedObject(OAuth2AuthorizationService.class, oAuth2AuthorizationService);
 
-    List<SessionAuthenticationStrategy> sessionStrategies = new ArrayList<>(1);
-    sessionStrategies.add((authentication, request, response) -> {
-      String accessToken = authentication.getCredentials().toString();
-      Cookie cookie =
-        AccessTokenRepresentSecurityContextRepository.getOrNewAccessTokenCookie(request);
-      String saveInfo = request.getParameter("saveinfo");
-      boolean persist =
-        StringUtils.isNotBlank(saveInfo) && !"false".equalsIgnoreCase(saveInfo.trim());
-      if (!cookie.getValue().equals(accessToken) || persist) {
-        cookie.setValue(accessToken);
-        if (persist) {
-          cookie.setMaxAge(30 * 24 * 60 * 60);
-        }
-
-        response.addCookie(cookie);
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("Add cookie:{} to response", cookie);
-        }
-      }
-    });
-
+    List<SessionAuthenticationStrategy> sessionStrategies = this
+      .getAuthenticationSessionStrategies();
     JUsernamePasswordAuthenticationFilter jUsernamePasswordAuthenticationFilter =
       this.getJUsernamePasswordAuthenticationFilter(sessionStrategies);
     OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
@@ -163,8 +155,10 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 //			.loginPage(Routes.LOGIN)
 //			.failureUrl("/login-handler")
 //			.permitAll().and()
-//			.oauth2Login().and()
-			.exceptionHandling() // 允许配置异常处理 -> 安全异常处理 LogoutFilter 之后, 确保所有登录异常纳入异常处理
+//			.oauth2Login()
+//        .tokenEndpoint()
+//        .accessTokenResponseClient(accessTokenResponseClient()).and().and()
+      .exceptionHandling() // 允许配置异常处理 -> 安全异常处理 LogoutFilter 之后, 确保所有登录异常纳入异常处理
 			.authenticationEntryPoint(jAuthenticationEntryPoint)
 			.accessDeniedHandler(jAccessDeniedHandler).and().csrf()
 			.requireCsrfProtectionMatcher(new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE)).disable()
@@ -199,8 +193,19 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 		// @formatter:on
   }
 
-  private BasicAuthenticationFilter getBasicAuthenticationFilter() throws Exception {
-    return new BasicAuthenticationFilter(this.authenticationManager());
+  @Bean
+  public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient() {
+    DefaultAuthorizationCodeTokenResponseClient accessTokenResponseClient = new DefaultAuthorizationCodeTokenResponseClient();
+    accessTokenResponseClient.setRequestEntityConverter(new CustomRequestEntityConverter());
+
+    OAuth2AccessTokenResponseHttpMessageConverter tokenResponseHttpMessageConverter = new OAuth2AccessTokenResponseHttpMessageConverter();
+    tokenResponseHttpMessageConverter
+      .setTokenResponseConverter(new JAccessTokenResponseConverter());
+    RestTemplate restTemplate = new RestTemplate(
+      Arrays.asList(new FormHttpMessageConverter(), tokenResponseHttpMessageConverter));
+    restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
+    accessTokenResponseClient.setRestOperations(restTemplate);
+    return accessTokenResponseClient;
   }
 
   @Override
@@ -253,29 +258,6 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
     };
   }
 
-  @Bean
-  public KeyManager keyManager() {
-    return new StaticKeyGeneratingKeyManager();
-  }
-
-  @Bean
-  public DaoAuthenticationProvider authenticationProvider() {
-    DaoAuthenticationProvider authProvider = new JUserNamePasswordAuthenticationProvider(
-      userDetailsService());
-    authProvider.setPasswordEncoder(passwordEncoder());
-    return authProvider;
-  }
-
-  @Bean
-  public UserDetailsService userDetailsService() {
-    return new JUserDetailsService(passwordEncoder());
-  }
-
-  @Bean
-  public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
-  }
-
   // 表单登录
   private JUsernamePasswordAuthenticationFilter getJUsernamePasswordAuthenticationFilter(
     List<SessionAuthenticationStrategy> sessionStrategies) throws Exception {
@@ -325,5 +307,29 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
         new AntPathRequestMatcher(Routes.DEFAULT, RequestMethod.GET.toString()),
         new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.GET.toString())),
       new NegatedRequestMatcher(new JUidCidTokenRequestMatcher(Routes.OAUTH_AUTHORIZE))));
+  }
+
+  private List<SessionAuthenticationStrategy> getAuthenticationSessionStrategies() {
+    List<SessionAuthenticationStrategy> sessionStrategies = new ArrayList<>(1);
+    sessionStrategies.add((authentication, request, response) -> {
+      String accessToken = authentication.getCredentials().toString();
+      Cookie cookie =
+        AccessTokenRepresentSecurityContextRepository.getOrNewAccessTokenCookie(request);
+      String saveInfo = request.getParameter("saveinfo");
+      boolean persist =
+        StringUtils.isNotBlank(saveInfo) && !"false".equalsIgnoreCase(saveInfo.trim());
+      if (!cookie.getValue().equals(accessToken) || persist) {
+        cookie.setValue(accessToken);
+        if (persist) {
+          cookie.setMaxAge(30 * 24 * 60 * 60);
+        }
+
+        response.addCookie(cookie);
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Add cookie:{} to response", cookie);
+        }
+      }
+    });
+    return sessionStrategies;
   }
 }
