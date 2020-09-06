@@ -86,7 +86,7 @@ public class Configurations {
   public RegisteredClientRepository registeredClientRepository() {
     Set<String> redirectUris = new HashSet<>(2);
     redirectUris.add("http://www.baidu.com");
-    redirectUris.add("http://localhost:8080/");
+    redirectUris.add("http://localhost:8080/authorized");
 
     RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
       .clientId("messaging-client")
@@ -97,7 +97,6 @@ public class Configurations {
       .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
       .authorizationGrantType(AuthorizationGrantType.PASSWORD)
       .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-//      .redirectUri("http://localhost:8080/authorized")
       .redirectUris(uris -> uris.addAll(redirectUris))
       .scope("message.read")
       .scope("message.write")

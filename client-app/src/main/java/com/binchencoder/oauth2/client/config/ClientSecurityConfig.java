@@ -15,14 +15,12 @@
  */
 package com.binchencoder.oauth2.client.config;
 
-import com.binchencoder.oauth2.client.handler.CustomAuthorizationRequestResolver;
 import com.binchencoder.oauth2.client.handler.CustomRequestEntityConverter;
 import com.binchencoder.oauth2.client.handler.JAccessTokenResponseConverter;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
@@ -60,34 +58,54 @@ public class ClientSecurityConfig extends WebSecurityConfigurerAdapter {
   @Override
   protected void configure(HttpSecurity http) throws Exception {
     // @formatter:off
-		http.authorizeRequests()
-            .antMatchers("/oauth_login", "/loginFailure", "/")
-            .permitAll()
-            .anyRequest()
-            .authenticated()
-            .and()
-            .oauth2Login()
-            .loginPage("/oauth_login")
-            .authorizationEndpoint()
-              .authorizationRequestResolver( new CustomAuthorizationRequestResolver(clientRegistrationRepository,"/oauth2/authorize-client"))
+//		http.authorizeRequests()
+//      .antMatchers("/oauth_login", "/loginFailure", "/")
+//      .permitAll()
+//      .anyRequest()
+//      .authenticated()
+//      .and()
+//      .oauth2Login()
+//      .loginPage("/oauth_login")
+//      .authorizationEndpoint()
+//        .authorizationRequestResolver( new CustomAuthorizationRequestResolver(clientRegistrationRepository,"/oauth2/authorize-client"))
+//      .baseUri("/oauth2/authorize-client")
+//      .authorizationRequestRepository(authorizationRequestRepository())
+//      .and()
+//      .tokenEndpoint()
+//      .accessTokenResponseClient(accessTokenResponseClient())
+//      .and()
+//      .defaultSuccessUrl("/loginSuccess")
+//      .failureUrl("/loginFailure");
 
-            .baseUri("/oauth2/authorize-client")
-            .authorizationRequestRepository(authorizationRequestRepository())
-            .and()
-            .tokenEndpoint()
-            .accessTokenResponseClient(accessTokenResponseClient())
-            .and()
-            .defaultSuccessUrl("/loginSuccess")
-            .failureUrl("/loginFailure");
+
+//		http
+//      .authorizeRequests()
+//        .anyRequest().authenticated()
+//      .and()
+//      .formLogin()
+//        .loginPage("/login")
+//        .failureUrl("/login-handler").permitAll()
+//      .and()
+//      .oauth2Client();
+
+
+    // 免登录
+    http
+			.authorizeRequests()
+				.anyRequest().permitAll()
+				.and()
+			.logout()
+				.disable()
+			.oauth2Client();
 		// @formatter:on
   }
 
-  @Bean
+  //  @Bean
   public AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository() {
     return new HttpSessionOAuth2AuthorizationRequestRepository();
   }
 
-  @Bean
+  //  @Bean
   public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient() {
     DefaultAuthorizationCodeTokenResponseClient accessTokenResponseClient = new DefaultAuthorizationCodeTokenResponseClient();
     accessTokenResponseClient.setRequestEntityConverter(new CustomRequestEntityConverter());
