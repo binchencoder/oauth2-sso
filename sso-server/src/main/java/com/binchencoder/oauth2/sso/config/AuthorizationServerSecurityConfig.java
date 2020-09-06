@@ -134,14 +134,14 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
       accessTokenRepresentSecurityContextRepository);
     http.setSharedObject(OAuth2AuthorizationService.class, oAuth2AuthorizationService);
 
-    List<SessionAuthenticationStrategy> sessionStrategies = this
-      .getAuthenticationSessionStrategies();
+    List<SessionAuthenticationStrategy> sessionStrategies =
+      this.getAuthenticationSessionStrategies();
     JUsernamePasswordAuthenticationFilter jUsernamePasswordAuthenticationFilter =
       this.getJUsernamePasswordAuthenticationFilter(sessionStrategies);
     OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
       new OAuth2AuthorizationServerConfigurer<>();
-    List<RequestMatcher> requestMatchers = Lists
-      .newArrayList(authorizationServerConfigurer.getEndpointMatchers());
+    List<RequestMatcher> requestMatchers =
+      Lists.newArrayList(authorizationServerConfigurer.getEndpointMatchers());
     requestMatchers
       .add(new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.POST.toString()));
 
@@ -150,8 +150,9 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 			.httpBasic().and() // it indicate basic authentication is requires
 			.requestMatcher(new OrRequestMatcher(requestMatchers))
 			.authorizeRequests()
-			.antMatchers(Routes.DEFAULT, Routes.LOGIN).permitAll().anyRequest().authenticated().and()
+			  .antMatchers(Routes.DEFAULT, Routes.LOGIN).permitAll().anyRequest().authenticated().and()
 //			.formLogin()
+//        .successHandler()
 //			.loginPage(Routes.LOGIN)
 //			.failureUrl("/login-handler")
 //			.permitAll().and()
@@ -159,25 +160,24 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 //        .tokenEndpoint()
 //        .accessTokenResponseClient(accessTokenResponseClient()).and().and()
       .exceptionHandling() // 允许配置异常处理 -> 安全异常处理 LogoutFilter 之后, 确保所有登录异常纳入异常处理
-			.authenticationEntryPoint(jAuthenticationEntryPoint)
-			.accessDeniedHandler(jAccessDeniedHandler).and().csrf()
+			  .authenticationEntryPoint(jAuthenticationEntryPoint)
+			  .accessDeniedHandler(jAccessDeniedHandler).and()
+      .csrf()
 			.requireCsrfProtectionMatcher(new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE)).disable()
-			.logout().logoutSuccessHandler(notifyLogoutSuccessHandler).logoutUrl(Routes.LOGOUT)
-			.addLogoutHandler(languageCleanLogoutHandler).and()
-			// TODO(binchen): 加上这段代码之后, BasicAuthenticationFilter被添加了两遍
-//			.addFilterBefore(getBasicAuthenticationFilter(),
-//				AbstractPreAuthenticatedProcessingFilter.class)
+			.logout()
+        .logoutSuccessHandler(notifyLogoutSuccessHandler)
+        .logoutUrl(Routes.LOGOUT)
+			  .addLogoutHandler(languageCleanLogoutHandler).and()
+      // 禁止匿名用户登录
+      .anonymous().disable()
 			// 认证服务内部异常处理
-			.addFilterBefore(getJAuthenticationServiceExceptionFilter(),
-				ExceptionTranslationFilter.class)
-//      .addFilter(getBasicAuthenticationFilter())
+			.addFilterBefore(getJAuthenticationServiceExceptionFilter(), ExceptionTranslationFilter.class)
 			// 已经登录帐号冲突检测
 			.addFilterAfter(getJRequiredUserCheckFilter(), ExceptionTranslationFilter.class)
 			// 账号登陆记录
 			.addFilterAfter(getJLogoutRecordFilter(), getJRequiredUserCheckFilter().getClass())
 			// 表单登录 --> 使可以被异常捕获
-			.addFilterAfter(jUsernamePasswordAuthenticationFilter,
-				getJRequiredUserCheckFilter().getClass())
+			.addFilterAfter(jUsernamePasswordAuthenticationFilter, getJRequiredUserCheckFilter().getClass())
 			// 一键登录 --> 使可以被异常捕获
 			.addFilterAfter(getJUidCidTokenAuthenticationFilter(sessionStrategies),
 				AbstractPreAuthenticatedProcessingFilter.class)

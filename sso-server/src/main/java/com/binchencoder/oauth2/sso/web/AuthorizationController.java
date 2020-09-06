@@ -16,6 +16,7 @@
 package com.binchencoder.oauth2.sso.web;
 
 import com.binchencoder.oauth2.sso.exception.AnotherUserLoginedAccessDeniedException;
+import com.binchencoder.oauth2.sso.exception.NotRequiredUserAccessDeniedException;
 import com.binchencoder.oauth2.sso.route.Routes;
 import com.binchencoder.oauth2.sso.service.AuthenticationFailureCountingService;
 import com.binchencoder.oauth2.sso.service.JUserDetails;
@@ -141,7 +142,7 @@ public class AuthorizationController {
 
     AuthenticationException exception =
       (AuthenticationException) request.getAttribute(WebAttributes.AUTHENTICATION_EXCEPTION);
-    String errorMsg = getErrorMsg(exception);
+    String errorMsg = this.getErrorMsg(exception);
     if (errorMsg != null) {
       ret.put("error", errorMsg);
     } else {
@@ -166,8 +167,8 @@ public class AuthorizationController {
 
     ret.put("showIdentifyCode",
       authenticationFailureCountingService.isNeedCheckIdentifyCode(request, response));
-    // NotRequiredUserAccessDeniedException exception = (NotRequiredUserAccessDeniedException)
-    // request.getAttribute(WebAttributes.ACCESS_DENIED_403);
+    NotRequiredUserAccessDeniedException exception = (NotRequiredUserAccessDeniedException)
+      request.getAttribute(WebAttributes.ACCESS_DENIED_403);
     ret.put("error", "NotRequiredUser");
     return ret;
   }
