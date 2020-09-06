@@ -41,6 +41,13 @@ public class AuthorizationController {
     this.messagesBaseUri = messagesBaseUri;
   }
 
+  @GetMapping("/authorized")    // registered redirect_uri for authorization_code
+  public String authorized(Model model) {
+    String[] messages = retrieveMessages("messaging-client-authorization-code");
+    model.addAttribute("messages", messages);
+    return "index";
+  }
+
   @GetMapping(value = "/authorize", params = "grant_type=authorization_code")
   public String authorizationCodeGrant(Model model,
     @RegisteredOAuth2AuthorizedClient("messaging-client-authorization-code")
