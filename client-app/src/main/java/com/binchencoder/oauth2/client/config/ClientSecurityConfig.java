@@ -92,10 +92,11 @@ public class ClientSecurityConfig extends WebSecurityConfigurerAdapter {
     // 免登录
     http
 			.authorizeRequests()
-				.anyRequest().permitAll()
-				.and()
+//				.antMatchers("/authorized").authenticated()
+				.anyRequest().permitAll().and()
 			.logout()
 				.disable()
+//			.anonymous().disable()
 			.oauth2Client();
 		// @formatter:on
   }

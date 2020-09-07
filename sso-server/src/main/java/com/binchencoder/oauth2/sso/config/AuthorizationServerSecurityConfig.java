@@ -85,67 +85,67 @@ import org.springframework.web.client.RestTemplate;
 @EnableWebSecurity
 public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdapter {
 
-  private static final Logger LOGGER = LoggerFactory
-    .getLogger(AuthorizationServerSecurityConfig.class);
+	private static final Logger LOGGER = LoggerFactory
+		.getLogger(AuthorizationServerSecurityConfig.class);
 
-  @Autowired
-  private NotifyLogoutSuccessHandler notifyLogoutSuccessHandler;
+	@Autowired
+	private NotifyLogoutSuccessHandler notifyLogoutSuccessHandler;
 
-  @Autowired
-  @Qualifier("languageCleanLogoutHandler")
-  private LogoutHandler languageCleanLogoutHandler;
+	@Autowired
+	@Qualifier("languageCleanLogoutHandler")
+	private LogoutHandler languageCleanLogoutHandler;
 
-  @Autowired
-  private JAuthenticationEntryPoint jAuthenticationEntryPoint;
+	@Autowired
+	private JAuthenticationEntryPoint jAuthenticationEntryPoint;
 
-  @Autowired
-  private JAccessDeniedHandler jAccessDeniedHandler;
+	@Autowired
+	private JAccessDeniedHandler jAccessDeniedHandler;
 
-  @Autowired
-  private AccessTokenRepresentSecurityContextRepository accessTokenRepresentSecurityContextRepository;
+	@Autowired
+	private AccessTokenRepresentSecurityContextRepository accessTokenRepresentSecurityContextRepository;
 
-  @Autowired
-  private AuthenticationFailureCountingService authenticationFailureCountingService;
+	@Autowired
+	private AuthenticationFailureCountingService authenticationFailureCountingService;
 
-  @Autowired
-  @Qualifier("daoAuthenticationProvider")
-  private AuthenticationProvider authenticationProvider;
+	@Autowired
+	@Qualifier("daoAuthenticationProvider")
+	private AuthenticationProvider authenticationProvider;
 
-  @Autowired
-  private OAuth2AuthorizationService oAuth2AuthorizationService;
+	@Autowired
+	private OAuth2AuthorizationService oAuth2AuthorizationService;
 
-  @Override
-  protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-    auth.eraseCredentials(false);
+	@Override
+	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+		auth.eraseCredentials(false);
 
-    auth.authenticationProvider(authenticationProvider);
-  }
+		auth.authenticationProvider(authenticationProvider);
+	}
 
-  @Override
-  public void configure(WebSecurity web) {
-    web
-      .ignoring()
-      .antMatchers("/webjars/**");
-  }
+	@Override
+	public void configure(WebSecurity web) {
+		web
+			.ignoring()
+			.antMatchers("/webjars/**");
+	}
 
-  @Override
-  protected void configure(HttpSecurity http) throws Exception {
-    http.setSharedObject(SecurityContextRepository.class,
-      accessTokenRepresentSecurityContextRepository);
-    http.setSharedObject(OAuth2AuthorizationService.class, oAuth2AuthorizationService);
+	@Override
+	protected void configure(HttpSecurity http) throws Exception {
+		http.setSharedObject(SecurityContextRepository.class,
+			accessTokenRepresentSecurityContextRepository);
+		http.setSharedObject(OAuth2AuthorizationService.class, oAuth2AuthorizationService);
 
-    List<SessionAuthenticationStrategy> sessionStrategies =
-      this.getAuthenticationSessionStrategies();
-    JUsernamePasswordAuthenticationFilter jUsernamePasswordAuthenticationFilter =
-      this.getJUsernamePasswordAuthenticationFilter(sessionStrategies);
-    OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-      new OAuth2AuthorizationServerConfigurer<>();
-    List<RequestMatcher> requestMatchers =
-      Lists.newArrayList(authorizationServerConfigurer.getEndpointMatchers());
-    requestMatchers
-      .add(new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.POST.toString()));
+		List<SessionAuthenticationStrategy> sessionStrategies =
+			this.getAuthenticationSessionStrategies();
+		JUsernamePasswordAuthenticationFilter jUsernamePasswordAuthenticationFilter =
+			this.getJUsernamePasswordAuthenticationFilter(sessionStrategies);
+		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+			new OAuth2AuthorizationServerConfigurer<>();
+		List<RequestMatcher> requestMatchers =
+			Lists.newArrayList(authorizationServerConfigurer.getEndpointMatchers());
+		requestMatchers
+			.add(new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.POST.toString()));
 
-    // @formatter:off
+		// @formatter:off
 		http
 			.httpBasic().and() // it indicate basic authentication is requires
 			.requestMatcher(new OrRequestMatcher(requestMatchers))
@@ -159,17 +159,17 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 //			.oauth2Login()
 //        .tokenEndpoint()
 //        .accessTokenResponseClient(accessTokenResponseClient()).and().and()
-      .exceptionHandling() // 允许配置异常处理 -> 安全异常处理 LogoutFilter 之后, 确保所有登录异常纳入异常处理
+			.exceptionHandling() // 允许配置异常处理 -> 安全异常处理 LogoutFilter 之后, 确保所有登录异常纳入异常处理
 			  .authenticationEntryPoint(jAuthenticationEntryPoint)
 			  .accessDeniedHandler(jAccessDeniedHandler).and()
-      .csrf()
+			.csrf()
 			.requireCsrfProtectionMatcher(new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE)).disable()
 			.logout()
-        .logoutSuccessHandler(notifyLogoutSuccessHandler)
-        .logoutUrl(Routes.LOGOUT)
+			  .logoutSuccessHandler(notifyLogoutSuccessHandler)
+			  .logoutUrl(Routes.LOGOUT)
 			  .addLogoutHandler(languageCleanLogoutHandler).and()
-      // 禁止匿名用户登录
-      .anonymous().disable()
+			// 禁止匿名用户登录
+			.anonymous().disable()
 			// 认证服务内部异常处理
 			.addFilterBefore(getJAuthenticationServiceExceptionFilter(), ExceptionTranslationFilter.class)
 			// 已经登录帐号冲突检测
@@ -177,11 +177,20 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 			// 账号登陆记录
 			.addFilterAfter(getJLogoutRecordFilter(), getJRequiredUserCheckFilter().getClass())
 			// 表单登录 --> 使可以被异常捕获
-			.addFilterAfter(jUsernamePasswordAuthenticationFilter, getJRequiredUserCheckFilter().getClass())
+			.addFilterAfter(jUsernamePasswordAuthenticationFilter,
+				getJRequiredUserCheckFilter().getClass())
 			// 一键登录 --> 使可以被异常捕获
 			.addFilterAfter(getJUidCidTokenAuthenticationFilter(sessionStrategies),
 				AbstractPreAuthenticatedProcessingFilter.class)
 			.apply(authorizationServerConfigurer);
+
+		// maximumSessions配置一个用户的最大session数量, 默认不限,这里设1。先在一个浏览器如chrome登录,
+		// 然后在另一个浏览器如firefox登录,此时同时登录数为2超出参数1,之前chrome的session将会过期,
+		// 再去chrome发出请求会跳转到过期url.
+		http.sessionManagement()
+			.maximumSessions(1)
+			.maxSessionsPreventsLogin(false)
+			.expiredUrl("/expired");
 
 		http.csrf().disable(); // 关跨域保护
 		http.headers() // 2. -> 安全头添加
@@ -191,145 +200,145 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 			.httpStrictTransportSecurity().and() // HSTS 保护
 			.frameOptions().disable(); // 将安全标头添加到响应
 		// @formatter:on
-  }
+	}
 
-  @Bean
-  public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient() {
-    DefaultAuthorizationCodeTokenResponseClient accessTokenResponseClient = new DefaultAuthorizationCodeTokenResponseClient();
-    accessTokenResponseClient.setRequestEntityConverter(new CustomRequestEntityConverter());
+	@Bean
+	public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient() {
+		DefaultAuthorizationCodeTokenResponseClient accessTokenResponseClient = new DefaultAuthorizationCodeTokenResponseClient();
+		accessTokenResponseClient.setRequestEntityConverter(new CustomRequestEntityConverter());
 
-    OAuth2AccessTokenResponseHttpMessageConverter tokenResponseHttpMessageConverter = new OAuth2AccessTokenResponseHttpMessageConverter();
-    tokenResponseHttpMessageConverter
-      .setTokenResponseConverter(new JAccessTokenResponseConverter());
-    RestTemplate restTemplate = new RestTemplate(
-      Arrays.asList(new FormHttpMessageConverter(), tokenResponseHttpMessageConverter));
-    restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
-    accessTokenResponseClient.setRestOperations(restTemplate);
-    return accessTokenResponseClient;
-  }
+		OAuth2AccessTokenResponseHttpMessageConverter tokenResponseHttpMessageConverter = new OAuth2AccessTokenResponseHttpMessageConverter();
+		tokenResponseHttpMessageConverter
+			.setTokenResponseConverter(new JAccessTokenResponseConverter());
+		RestTemplate restTemplate = new RestTemplate(
+			Arrays.asList(new FormHttpMessageConverter(), tokenResponseHttpMessageConverter));
+		restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
+		accessTokenResponseClient.setRestOperations(restTemplate);
+		return accessTokenResponseClient;
+	}
 
-  @Override
-  @Bean
-  public AuthenticationManager authenticationManagerBean() throws Exception {
-    AuthenticationManager acture = super.authenticationManagerBean();
-    return authentication -> {
-      Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
-      Authentication authResult = acture.authenticate(authentication);
+	@Override
+	@Bean
+	public AuthenticationManager authenticationManagerBean() throws Exception {
+		AuthenticationManager acture = super.authenticationManagerBean();
+		return authentication -> {
+			Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
+			Authentication authResult = acture.authenticate(authentication);
 
-      // 检测登录后的用户与期望的用户是否匹配。
-      if (authentication != null && authResult != null
-        && authentication.getDetails() instanceof JWebAuthenticationDetails) {
-        JWebAuthenticationDetails webDetails =
-          (JWebAuthenticationDetails) authentication.getDetails();
+			// 检测登录后的用户与期望的用户是否匹配。
+			if (authentication != null && authResult != null
+				&& authentication.getDetails() instanceof JWebAuthenticationDetails) {
+				JWebAuthenticationDetails webDetails =
+					(JWebAuthenticationDetails) authentication.getDetails();
 
-        // 纯企业账号登录
-        if (authResult.getPrincipal() instanceof JUserDetails) {
-          JUserDetails details = (JUserDetails) authResult.getPrincipal();
-          if (!webDetails.matchUid(details.getUserID())) {
-            throw new NotRequiredUserAuthenticationException(
-              "Authentication user not match required user");
-          }
-        }
-      }
+				// 纯企业账号登录
+				if (authResult.getPrincipal() instanceof JUserDetails) {
+					JUserDetails details = (JUserDetails) authResult.getPrincipal();
+					if (!webDetails.matchUid(details.getUserID())) {
+						throw new NotRequiredUserAuthenticationException(
+							"Authentication user not match required user");
+					}
+				}
+			}
 
-      if (existingAuth != null && authResult != null
-        && existingAuth.isAuthenticated()
-        && authResult.isAuthenticated()
-        && !(existingAuth instanceof AnonymousAuthenticationToken)) {
-        if (existingAuth.getPrincipal() instanceof JUserDetails
-          && authResult.getPrincipal() instanceof JUserDetails
-          && !Objects.equals(authResult.getName(), existingAuth.getName())) {
-          throw new AnotherUserLoginedAccessDeniedException(
-            "Authentication not match current user", existingAuth, authResult);
-        }
-      }
+			if (existingAuth != null && authResult != null
+				&& existingAuth.isAuthenticated()
+				&& authResult.isAuthenticated()
+				&& !(existingAuth instanceof AnonymousAuthenticationToken)) {
+				if (existingAuth.getPrincipal() instanceof JUserDetails
+					&& authResult.getPrincipal() instanceof JUserDetails
+					&& !Objects.equals(authResult.getName(), existingAuth.getName())) {
+					throw new AnotherUserLoginedAccessDeniedException(
+						"Authentication not match current user", existingAuth, authResult);
+				}
+			}
 
-      // // 一键登录成功清理token 个人账号token有复用，不复用时取消注释
-      // if (authentication instanceof JUidCidTokenAuthenticationToken) {
-      // tokenService.removeToken(((JUidCidTokenAuthenticationToken) authentication).getToken());
-      // }
+			// // 一键登录成功清理token 个人账号token有复用,不复用时取消注释
+			// if (authentication instanceof JUidCidTokenAuthenticationToken) {
+			// tokenService.removeToken(((JUidCidTokenAuthenticationToken) authentication).getToken());
+			// }
 
-      // 账号冲突登陆成功清理token
+			// 账号冲突登陆成功清理token
 //        if (authentication instanceof JUsernameTokenAuthenticationToken) {
 //          tokenService.removeToken(authentication.getCredentials().toString());
 //        }
 
-      return authResult;
-    };
-  }
+			return authResult;
+		};
+	}
 
-  // 表单登录
-  private JUsernamePasswordAuthenticationFilter getJUsernamePasswordAuthenticationFilter(
-    List<SessionAuthenticationStrategy> sessionStrategies) throws Exception {
-    JUsernamePasswordAuthenticationFilter formLogin = new JUsernamePasswordAuthenticationFilter();
-    JForwardAuthenticationSuccessHandler jForwardAuthenticationSuccessHandler =
-      new JForwardAuthenticationSuccessHandler();
-    // TODO(binchencoder): Login success kafka message
+	// 表单登录
+	private JUsernamePasswordAuthenticationFilter getJUsernamePasswordAuthenticationFilter(
+		List<SessionAuthenticationStrategy> sessionStrategies) throws Exception {
+		JUsernamePasswordAuthenticationFilter formLogin = new JUsernamePasswordAuthenticationFilter();
+		JForwardAuthenticationSuccessHandler jForwardAuthenticationSuccessHandler =
+			new JForwardAuthenticationSuccessHandler();
+		// TODO(binchencoder): Login success kafka message
 //    jForwardAuthenticationSuccessHandler.setKafkaStorageAdapter(kafkaStorageAdapter);
-    formLogin.setAuthenticationSuccessHandler(jForwardAuthenticationSuccessHandler);
-    formLogin.setAuthenticationFailureCountingService(authenticationFailureCountingService);
-    formLogin.setAuthenticationManager(authenticationManagerBean());
-    formLogin.setUsernameParameter(OAuth2ParameterNames.USERNAME);
-    formLogin.setPasswordParameter(OAuth2ParameterNames.PASSWORD);
-    formLogin.setAuthenticationFailureHandler(jAuthenticationEntryPoint);
-    formLogin.setSessionAuthenticationStrategy(
-      new CompositeSessionAuthenticationStrategy(sessionStrategies));
-    return formLogin;
-  }
+		formLogin.setAuthenticationSuccessHandler(jForwardAuthenticationSuccessHandler);
+		formLogin.setAuthenticationFailureCountingService(authenticationFailureCountingService);
+		formLogin.setAuthenticationManager(authenticationManagerBean());
+		formLogin.setUsernameParameter(OAuth2ParameterNames.USERNAME);
+		formLogin.setPasswordParameter(OAuth2ParameterNames.PASSWORD);
+		formLogin.setAuthenticationFailureHandler(jAuthenticationEntryPoint);
+		formLogin.setSessionAuthenticationStrategy(
+			new CompositeSessionAuthenticationStrategy(sessionStrategies));
+		return formLogin;
+	}
 
-  // 退出登录记录生成器
-  private JLogoutRecordFilter getJLogoutRecordFilter() {
-    return new JLogoutRecordFilter(
-      new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.GET.toString()));
-  }
+	// 退出登录记录生成器
+	private JLogoutRecordFilter getJLogoutRecordFilter() {
+		return new JLogoutRecordFilter(
+			new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.GET.toString()));
+	}
 
-  // 一键登录
-  private JUidCidTokenAuthenticationFilter getJUidCidTokenAuthenticationFilter(
-    List<SessionAuthenticationStrategy> sessionStrategies) throws Exception {
-    JUidCidTokenAuthenticationFilter jTokenLogin = new JUidCidTokenAuthenticationFilter();
-    jTokenLogin.setAuthenticationManager(authenticationManagerBean());
-    jTokenLogin.setAuthenticationFailureHandler(jAuthenticationEntryPoint);
-    jTokenLogin.setSessionAuthenticationStrategy(
-      new CompositeSessionAuthenticationStrategy(sessionStrategies));
-    return jTokenLogin;
-  }
+	// 一键登录
+	private JUidCidTokenAuthenticationFilter getJUidCidTokenAuthenticationFilter(
+		List<SessionAuthenticationStrategy> sessionStrategies) throws Exception {
+		JUidCidTokenAuthenticationFilter jTokenLogin = new JUidCidTokenAuthenticationFilter();
+		jTokenLogin.setAuthenticationManager(authenticationManagerBean());
+		jTokenLogin.setAuthenticationFailureHandler(jAuthenticationEntryPoint);
+		jTokenLogin.setSessionAuthenticationStrategy(
+			new CompositeSessionAuthenticationStrategy(sessionStrategies));
+		return jTokenLogin;
+	}
 
-  private JAuthenticationServiceExceptionFilter getJAuthenticationServiceExceptionFilter() {
-    JAuthenticationServiceExceptionFilter serviceExceptionFilter =
-      new JAuthenticationServiceExceptionFilter();
-    serviceExceptionFilter.setAuthenticationEntryPoint(jAuthenticationEntryPoint);
-    return serviceExceptionFilter;
-  }
+	private JAuthenticationServiceExceptionFilter getJAuthenticationServiceExceptionFilter() {
+		JAuthenticationServiceExceptionFilter serviceExceptionFilter =
+			new JAuthenticationServiceExceptionFilter();
+		serviceExceptionFilter.setAuthenticationEntryPoint(jAuthenticationEntryPoint);
+		return serviceExceptionFilter;
+	}
 
-  private JRequiredUserCheckFilter getJRequiredUserCheckFilter() {
-    return new JRequiredUserCheckFilter(new AndRequestMatcher(
-      new OrRequestMatcher(
-        new AntPathRequestMatcher(Routes.DEFAULT, RequestMethod.GET.toString()),
-        new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.GET.toString())),
-      new NegatedRequestMatcher(new JUidCidTokenRequestMatcher(Routes.OAUTH_AUTHORIZE))));
-  }
+	private JRequiredUserCheckFilter getJRequiredUserCheckFilter() {
+		return new JRequiredUserCheckFilter(new AndRequestMatcher(
+			new OrRequestMatcher(
+				new AntPathRequestMatcher(Routes.DEFAULT, RequestMethod.GET.toString()),
+				new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.GET.toString())),
+			new NegatedRequestMatcher(new JUidCidTokenRequestMatcher(Routes.OAUTH_AUTHORIZE))));
+	}
 
-  private List<SessionAuthenticationStrategy> getAuthenticationSessionStrategies() {
-    List<SessionAuthenticationStrategy> sessionStrategies = new ArrayList<>(1);
-    sessionStrategies.add((authentication, request, response) -> {
-      String accessToken = authentication.getCredentials().toString();
-      Cookie cookie =
-        AccessTokenRepresentSecurityContextRepository.getOrNewAccessTokenCookie(request);
-      String saveInfo = request.getParameter("saveinfo");
-      boolean persist =
-        StringUtils.isNotBlank(saveInfo) && !"false".equalsIgnoreCase(saveInfo.trim());
-      if (!cookie.getValue().equals(accessToken) || persist) {
-        cookie.setValue(accessToken);
-        if (persist) {
-          cookie.setMaxAge(30 * 24 * 60 * 60);
-        }
+	private List<SessionAuthenticationStrategy> getAuthenticationSessionStrategies() {
+		List<SessionAuthenticationStrategy> sessionStrategies = new ArrayList<>(1);
+		sessionStrategies.add((authentication, request, response) -> {
+			String accessToken = authentication.getCredentials().toString();
+			Cookie cookie =
+				AccessTokenRepresentSecurityContextRepository.getOrNewAccessTokenCookie(request);
+			String saveInfo = request.getParameter("saveinfo");
+			boolean persist =
+				StringUtils.isNotBlank(saveInfo) && !"false".equalsIgnoreCase(saveInfo.trim());
+			if (!cookie.getValue().equals(accessToken) || persist) {
+				cookie.setValue(accessToken);
+				if (persist) {
+					cookie.setMaxAge(30 * 24 * 60 * 60);
+				}
 
-        response.addCookie(cookie);
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("Add cookie:{} to response", cookie);
-        }
-      }
-    });
-    return sessionStrategies;
-  }
+				response.addCookie(cookie);
+				if (LOGGER.isDebugEnabled()) {
+					LOGGER.debug("Add cookie:{} to response", cookie);
+				}
+			}
+		});
+		return sessionStrategies;
+	}
 }
