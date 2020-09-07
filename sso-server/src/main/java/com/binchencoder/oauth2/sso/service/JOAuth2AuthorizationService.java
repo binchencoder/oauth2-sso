@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.SpringSecurityCoreVersion2;
+import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -16,77 +17,85 @@ import org.springframework.util.Assert;
 
 public class JOAuth2AuthorizationService implements OAuth2AuthorizationService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(JOAuth2AuthorizationService.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(JOAuth2AuthorizationService.class);
 
-  // TODO(binchencoder): store db
-  private final Map<OAuth2AuthorizationId, OAuth2Authorization> authorizations = new ConcurrentHashMap<>();
+	// TODO(binchencoder): store db
+	private final Map<OAuth2AuthorizationId, OAuth2Authorization> authorizations = new ConcurrentHashMap<>();
 
-  @Override
-  public void save(OAuth2Authorization authorization) {
-    Assert.notNull(authorization, "authorization cannot be null");
-    OAuth2AuthorizationId authorizationId = new OAuth2AuthorizationId(
-      authorization.getRegisteredClientId(), authorization.getPrincipalName());
-    this.authorizations.put(authorizationId, authorization);
-  }
+	@Override
+	public void save(OAuth2Authorization authorization) {
+		Assert.notNull(authorization, "authorization cannot be null");
+		Object accessTokenAttr = authorization
+			.getAttribute(OAuth2AuthorizationAttributeNames.ACCESS_TOKEN_ATTRIBUTES);
+		if (null != accessTokenAttr) { // Save accessToken
+			AbstractOAuth2Token accessToken = (AbstractOAuth2Token) accessTokenAttr;
+		} else { // Save authorization code
 
-  @Override
-  public OAuth2Authorization findByToken(String token, TokenType tokenType) {
-    Assert.hasText(token, "token cannot be empty");
-    OAuth2Authorization auth = this.authorizations.values().stream()
-      .filter(authorization -> hasToken(authorization, token, tokenType))
-      .findFirst()
-      .orElse(null);
-    if (null == auth) {
-      LOGGER.warn("Not found OAuth2Authorization by token:{}", token);
-    }
+		}
 
-    OAuth2Authorization.Builder authBuilder = OAuth2Authorization.from(auth);
-    // TODO(binchencoder): get from db
-    Map<String, Object> addition = new HashMap<>();
-    addition.put("userId", 179);
-    addition.put("companyId", 10);
-    authBuilder.attributes(u -> u.putAll(addition));
+		OAuth2AuthorizationId authorizationId = new OAuth2AuthorizationId(
+			authorization.getRegisteredClientId(), authorization.getPrincipalName());
+		this.authorizations.put(authorizationId, authorization);
+	}
 
-    return authBuilder.build();
-  }
+	@Override
+	public OAuth2Authorization findByToken(String token, TokenType tokenType) {
+		Assert.hasText(token, "token cannot be empty");
+		OAuth2Authorization auth = this.authorizations.values().stream()
+			.filter(authorization -> hasToken(authorization, token, tokenType))
+			.findFirst()
+			.orElse(null);
+		if (null == auth) {
+			LOGGER.warn("Not found OAuth2Authorization by token:{}", token);
+		}
 
-  private boolean hasToken(OAuth2Authorization authorization, String token, TokenType tokenType) {
-    if (TokenType.AUTHORIZATION_CODE.equals(tokenType)) {
-      return token.equals(authorization.getAttribute(OAuth2AuthorizationAttributeNames.CODE));
-    } else if (TokenType.ACCESS_TOKEN.equals(tokenType)) {
-      return authorization.getAccessToken() != null &&
-        authorization.getAccessToken().getTokenValue().equals(token);
-    }
-    return false;
-  }
+		OAuth2Authorization.Builder authBuilder = OAuth2Authorization.from(auth);
+		// TODO(binchencoder): get from db
+		Map<String, Object> addition = new HashMap<>();
+		addition.put("userId", 179);
+		addition.put("companyId", 10);
+		authBuilder.attributes(u -> u.putAll(addition));
 
-  private static class OAuth2AuthorizationId implements Serializable {
+		return authBuilder.build();
+	}
 
-    private static final long serialVersionUID = SpringSecurityCoreVersion2.SERIAL_VERSION_UID;
-    private final String registeredClientId;
-    private final String principalName;
+	private boolean hasToken(OAuth2Authorization authorization, String token, TokenType tokenType) {
+		if (TokenType.AUTHORIZATION_CODE.equals(tokenType)) {
+			return token.equals(authorization.getAttribute(OAuth2AuthorizationAttributeNames.CODE));
+		} else if (TokenType.ACCESS_TOKEN.equals(tokenType)) {
+			return authorization.getAccessToken() != null &&
+				authorization.getAccessToken().getTokenValue().equals(token);
+		}
+		return false;
+	}
 
-    private OAuth2AuthorizationId(String registeredClientId, String principalName) {
-      this.registeredClientId = registeredClientId;
-      this.principalName = principalName;
-    }
+	private static class OAuth2AuthorizationId implements Serializable {
 
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null || getClass() != obj.getClass()) {
-        return false;
-      }
-      OAuth2AuthorizationId that = (OAuth2AuthorizationId) obj;
-      return Objects.equals(this.registeredClientId, that.registeredClientId) &&
-        Objects.equals(this.principalName, that.principalName);
-    }
+		private static final long serialVersionUID = SpringSecurityCoreVersion2.SERIAL_VERSION_UID;
+		private final String registeredClientId;
+		private final String principalName;
 
-    @Override
-    public int hashCode() {
-      return Objects.hash(this.registeredClientId, this.principalName);
-    }
-  }
+		private OAuth2AuthorizationId(String registeredClientId, String principalName) {
+			this.registeredClientId = registeredClientId;
+			this.principalName = principalName;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null || getClass() != obj.getClass()) {
+				return false;
+			}
+			OAuth2AuthorizationId that = (OAuth2AuthorizationId) obj;
+			return Objects.equals(this.registeredClientId, that.registeredClientId) &&
+				Objects.equals(this.principalName, that.principalName);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.registeredClientId, this.principalName);
+		}
+	}
 }
