@@ -128,6 +128,7 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 			.antMatchers("/webjars/**");
 	}
 
+	// @formatter:off
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.setSharedObject(SecurityContextRepository.class,
@@ -145,7 +146,6 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 		requestMatchers
 			.add(new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.POST.toString()));
 
-		// @formatter:off
 		http
 			.httpBasic().and() // it indicate basic authentication is requires
 			.requestMatcher(new OrRequestMatcher(requestMatchers))
