@@ -1,8 +1,9 @@
 package com.binchencoder.oauth2.sso.filter;
 
+import static org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI;
+
 import com.binchencoder.oauth2.sso.authentication.JUidCidTokenAuthenticationToken;
 import com.binchencoder.oauth2.sso.matcher.JUidCidTokenRequestMatcher;
-import com.binchencoder.oauth2.sso.route.Routes;
 import com.binchencoder.oauth2.sso.service.JWebAuthenticationDetailsSource;
 import java.io.IOException;
 import javax.servlet.FilterChain;
@@ -16,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -40,7 +42,9 @@ public class JUidCidTokenAuthenticationFilter extends AbstractAuthenticationProc
 	 * and use the supplied {@code AuthenticationEntryPoint} to handle authentication failures.
 	 */
 	public JUidCidTokenAuthenticationFilter() {
-		super(new JUidCidTokenRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.GET.toString()));
+		super(new JUidCidTokenRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI,
+			RequestMethod.GET.toString()));
+
 		setAuthenticationDetailsSource(new JWebAuthenticationDetailsSource());
 		setContinueChainBeforeSuccessfulAuthentication(true);
 	}

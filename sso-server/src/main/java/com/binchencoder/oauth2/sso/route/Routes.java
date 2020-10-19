@@ -43,9 +43,6 @@ public class Routes {
 	public static final String IMAGES_CAPTCHA_JPG = "images/captcha.jpg";
 	// return image/JPEG end
 
-	// SecurityConfiguration Routes
-	public static final String OAUTH_AUTHORIZE = "/oauth2/authorize";
-
 	// Login & Logout
 	public static final String LOGIN = "/login";
 	public static final String LOGIN_URL = "login/";

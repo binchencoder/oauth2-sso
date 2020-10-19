@@ -1,5 +1,7 @@
 package com.binchencoder.oauth2.sso.handler;
 
+import static org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI;
+
 import com.binchencoder.oauth2.sso.exception.AnotherUserLoginedAccessDeniedException;
 import com.binchencoder.oauth2.sso.exception.NotRequiredUserAccessDeniedException;
 import com.binchencoder.oauth2.sso.matcher.JUidCidTokenRequestMatcher;
@@ -24,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 public class JAccessDeniedHandler implements AccessDeniedHandler {
 
 	private static final RequestMatcher requestMatcher = new JUidCidTokenRequestMatcher(
-		Routes.OAUTH_AUTHORIZE, RequestMethod.GET.toString());
+		DEFAULT_AUTHORIZATION_ENDPOINT_URI,	RequestMethod.GET.toString());
 	private static Logger LOGGER = LoggerFactory.getLogger(JAccessDeniedHandler.class);
 
 	@Override

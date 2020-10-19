@@ -15,6 +15,8 @@
  */
 package com.binchencoder.oauth2.sso.config;
 
+import static org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI;
+
 import com.binchencoder.oauth2.sso.exception.AnotherUserLoginedAccessDeniedException;
 import com.binchencoder.oauth2.sso.exception.NotRequiredUserAuthenticationException;
 import com.binchencoder.oauth2.sso.filter.JAuthenticationServiceExceptionFilter;
@@ -34,7 +36,6 @@ import com.binchencoder.oauth2.sso.service.AccessTokenRepresentSecurityContextRe
 import com.binchencoder.oauth2.sso.service.AuthenticationFailureCountingService;
 import com.binchencoder.oauth2.sso.service.JUserDetails;
 import com.binchencoder.oauth2.sso.service.JWebAuthenticationDetails;
-import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -46,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -54,6 +56,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.core.Authentication;
@@ -65,6 +68,7 @@ import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorH
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.web.access.ExceptionTranslationFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
@@ -75,7 +79,6 @@ import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.client.RestTemplate;
 
@@ -83,6 +86,7 @@ import org.springframework.web.client.RestTemplate;
  * @author binchencoder
  */
 @EnableWebSecurity
+//@Import(OAuth2AuthorizationServerConfiguration.class)
 public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	private static final Logger LOGGER = LoggerFactory
@@ -141,14 +145,14 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 			this.getJUsernamePasswordAuthenticationFilter(sessionStrategies);
 		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
 			new OAuth2AuthorizationServerConfigurer<>();
-		List<RequestMatcher> requestMatchers =
-			Lists.newArrayList(authorizationServerConfigurer.getEndpointMatchers());
-		requestMatchers
-			.add(new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.POST.toString()));
+//		List<RequestMatcher> requestMatchers =
+//			Lists.newArrayList(authorizationServerConfigurer.getEndpointMatchers());
+//		requestMatchers
+//			.add(new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.POST.toString()));
 
 		http
 			.httpBasic().and() // it indicate basic authentication is requires
-			.requestMatcher(new OrRequestMatcher(requestMatchers))
+//			.requestMatcher(new OrRequestMatcher(requestMatchers))
 			.authorizeRequests()
 			  .antMatchers(Routes.DEFAULT, Routes.LOGIN).permitAll().anyRequest().authenticated().and()
 //			.formLogin()
@@ -163,7 +167,8 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 			  .authenticationEntryPoint(jAuthenticationEntryPoint)
 			  .accessDeniedHandler(jAccessDeniedHandler).and()
 			.csrf()
-			.requireCsrfProtectionMatcher(new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE)).disable()
+			.requireCsrfProtectionMatcher(
+				new AntPathRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI)).disable()
 			.logout()
 			  .logoutSuccessHandler(notifyLogoutSuccessHandler)
 			  .logoutUrl(Routes.LOGOUT)
@@ -289,7 +294,7 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 	// 退出登录记录生成器
 	private JLogoutRecordFilter getJLogoutRecordFilter() {
 		return new JLogoutRecordFilter(
-			new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.GET.toString()));
+			new AntPathRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI,	RequestMethod.GET.toString()));
 	}
 
 	// 一键登录
@@ -314,8 +319,8 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 		return new JRequiredUserCheckFilter(new AndRequestMatcher(
 			new OrRequestMatcher(
 				new AntPathRequestMatcher(Routes.DEFAULT, RequestMethod.GET.toString()),
-				new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.GET.toString())),
-			new NegatedRequestMatcher(new JUidCidTokenRequestMatcher(Routes.OAUTH_AUTHORIZE))));
+				new AntPathRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI,	RequestMethod.GET.toString())),
+			new NegatedRequestMatcher(new JUidCidTokenRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI))));
 	}
 
 	private List<SessionAuthenticationStrategy> getAuthenticationSessionStrategies() {

@@ -1,10 +1,11 @@
 package com.binchencoder.oauth2.sso.filter;
 
+import static org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI;
+
 import com.binchencoder.oauth2.sso.authentication.JUserNamePasswordAuthenticationProvider;
 import com.binchencoder.oauth2.sso.authentication.JUsernameTokenAuthenticationToken;
 import com.binchencoder.oauth2.sso.exception.IdentifyCodeErrorAuthenticationException;
 import com.binchencoder.oauth2.sso.exception.NeedIdentifyCodeAuthenticationException;
-import com.binchencoder.oauth2.sso.route.Routes;
 import com.binchencoder.oauth2.sso.service.AuthenticationFailureCountingService;
 import java.io.IOException;
 import javax.servlet.FilterChain;
@@ -38,7 +39,7 @@ public class JUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthe
 
 	public JUsernamePasswordAuthenticationFilter() {
 		this.setRequiresAuthenticationRequestMatcher(
-			new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.POST.toString()));
+			new AntPathRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI, RequestMethod.POST.toString()));
 	}
 
 	/**

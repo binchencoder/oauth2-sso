@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.SpringSecurityCoreVersion2;
+import org.springframework.security.core.SpringSecurityCoreVersion;
 import org.springframework.security.oauth2.core.AbstractOAuth2Token;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
@@ -36,6 +36,11 @@ public class JOAuth2AuthorizationService implements OAuth2AuthorizationService {
 		OAuth2AuthorizationId authorizationId = new OAuth2AuthorizationId(
 			authorization.getRegisteredClientId(), authorization.getPrincipalName());
 		this.authorizations.put(authorizationId, authorization);
+	}
+
+	@Override
+	public void remove(OAuth2Authorization authorization) {
+
 	}
 
 	@Override
@@ -71,7 +76,7 @@ public class JOAuth2AuthorizationService implements OAuth2AuthorizationService {
 
 	private static class OAuth2AuthorizationId implements Serializable {
 
-		private static final long serialVersionUID = SpringSecurityCoreVersion2.SERIAL_VERSION_UID;
+		private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
 		private final String registeredClientId;
 		private final String principalName;
 

@@ -24,7 +24,7 @@
 	<properties>
 		<java.version>1.8</java.version>
 		<!-- Spring -->
-		<org.spring-boot>2.3.2.RELEASE</org.spring-boot>
+		<org.spring-boot>2.4.0-M3</org.spring-boot>
 		<!-- Prometheus -->
 		<io.prometheus>0.0.15</io.prometheus>
 		<!-- Google Gson -->
