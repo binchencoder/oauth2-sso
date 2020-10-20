@@ -47,7 +47,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -56,7 +55,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.core.Authentication;
@@ -68,7 +67,6 @@ import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorH
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.web.access.ExceptionTranslationFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
@@ -86,7 +84,6 @@ import org.springframework.web.client.RestTemplate;
  * @author binchencoder
  */
 @EnableWebSecurity
-//@Import(OAuth2AuthorizationServerConfiguration.class)
 public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	private static final Logger LOGGER = LoggerFactory
@@ -135,6 +132,8 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 	// @formatter:off
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
+		OAuth2AuthorizationServerSecurity.applyDefaultConfiguration(http);
+
 		http.setSharedObject(SecurityContextRepository.class,
 			accessTokenRepresentSecurityContextRepository);
 		http.setSharedObject(OAuth2AuthorizationService.class, oAuth2AuthorizationService);
@@ -143,18 +142,11 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 			this.getAuthenticationSessionStrategies();
 		JUsernamePasswordAuthenticationFilter jUsernamePasswordAuthenticationFilter =
 			this.getJUsernamePasswordAuthenticationFilter(sessionStrategies);
-		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
-			new OAuth2AuthorizationServerConfigurer<>();
-//		List<RequestMatcher> requestMatchers =
-//			Lists.newArrayList(authorizationServerConfigurer.getEndpointMatchers());
-//		requestMatchers
-//			.add(new AntPathRequestMatcher(Routes.OAUTH_AUTHORIZE, RequestMethod.POST.toString()));
 
 		http
 			.httpBasic().and() // it indicate basic authentication is requires
-//			.requestMatcher(new OrRequestMatcher(requestMatchers))
-			.authorizeRequests()
-			  .antMatchers(Routes.DEFAULT, Routes.LOGIN).permitAll().anyRequest().authenticated().and()
+//			.authorizeRequests()
+//			  .antMatchers(Routes.DEFAULT, Routes.LOGIN).permitAll().and()
 //			.formLogin()
 //        .successHandler()
 //			.loginPage(Routes.LOGIN)
@@ -186,8 +178,7 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 				getJRequiredUserCheckFilter().getClass())
 			// 一键登录 --> 使可以被异常捕获
 			.addFilterAfter(getJUidCidTokenAuthenticationFilter(sessionStrategies),
-				AbstractPreAuthenticatedProcessingFilter.class)
-			.apply(authorizationServerConfigurer);
+				AbstractPreAuthenticatedProcessingFilter.class);
 
 		// maximumSessions配置一个用户的最大session数量, 默认不限,这里设1。先在一个浏览器如chrome登录,
 		// 然后在另一个浏览器如firefox登录,此时同时登录数为2超出参数1,之前chrome的session将会过期,
@@ -282,6 +273,9 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 //    jForwardAuthenticationSuccessHandler.setKafkaStorageAdapter(kafkaStorageAdapter);
 		formLogin.setAuthenticationSuccessHandler(jForwardAuthenticationSuccessHandler);
 		formLogin.setAuthenticationFailureCountingService(authenticationFailureCountingService);
+		formLogin.setRequiresAuthenticationRequestMatcher(new OrRequestMatcher(
+			new AntPathRequestMatcher(Routes.DEFAULT, RequestMethod.POST.toString()),
+			new AntPathRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI, RequestMethod.POST.toString())));
 		formLogin.setAuthenticationManager(authenticationManagerBean());
 		formLogin.setUsernameParameter(OAuth2ParameterNames.USERNAME);
 		formLogin.setPasswordParameter(OAuth2ParameterNames.PASSWORD);

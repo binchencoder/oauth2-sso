@@ -2,6 +2,7 @@ package com.binchencoder.oauth2.sso.config;
 
 import static org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI;
 
+import com.binchencoder.oauth2.account.service.AuthnService;
 import com.binchencoder.oauth2.sso.authentication.JUserNamePasswordAuthenticationProvider;
 import com.binchencoder.oauth2.sso.handler.JAccessDeniedHandler;
 import com.binchencoder.oauth2.sso.handler.JAuthenticationEntryPoint;
@@ -197,7 +198,7 @@ public class Configurations {
 	public JAuthenticationEntryPoint jAuthenticationEntryPoint() {
 		return new JAuthenticationEntryPoint(new OrRequestMatcher(
 			new AntPathRequestMatcher("/", HttpMethod.GET.toString()),
-			new AntPathRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI,	HttpMethod.GET.toString()))
+			new AntPathRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI, HttpMethod.GET.toString()))
 		);
 	}
 
@@ -256,5 +257,10 @@ public class Configurations {
 	@Bean
 	public AccessTokenRepresentSecurityContextRepository accessTokenRepresentSecurityContextRepository() {
 		return new AccessTokenRepresentSecurityContextRepository();
+	}
+
+	@Bean
+	public AuthnService authnService() {
+		return new AuthnService();
 	}
 }
