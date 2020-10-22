@@ -16,6 +16,7 @@
 	<packaging>pom</packaging>
 
 	<modules>
+		<module>official-authorizationserver</module>
 		<module>sso-server</module>
 		<module>client-app</module>
 		<module>resource-server</module>
