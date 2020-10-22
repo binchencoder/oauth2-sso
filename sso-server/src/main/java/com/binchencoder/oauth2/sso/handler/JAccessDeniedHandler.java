@@ -25,37 +25,38 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @Component
 public class JAccessDeniedHandler implements AccessDeniedHandler {
 
-	private static final RequestMatcher requestMatcher = new JUidCidTokenRequestMatcher(
-		DEFAULT_AUTHORIZATION_ENDPOINT_URI,	RequestMethod.GET.toString());
-	private static Logger LOGGER = LoggerFactory.getLogger(JAccessDeniedHandler.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(JAccessDeniedHandler.class);
 
-	@Override
-	public void handle(HttpServletRequest request, HttpServletResponse response,
-		AccessDeniedException accessDeniedException) throws IOException, ServletException {
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		if (auth != null) {
-			LOGGER.info("User '" + auth.getName()
-				+ "' attempted to access the protected URL: "
-				+ request.getRequestURI());
-		}
+  private static final RequestMatcher REQUEST_MATCHER = new JUidCidTokenRequestMatcher(
+    DEFAULT_AUTHORIZATION_ENDPOINT_URI, RequestMethod.GET.toString());
 
-		if (response.isCommitted()) {
-			return;
-		}
-		// Put exception into request scope (perhaps of use to a view)
-		request.setAttribute(WebAttributes.ACCESS_DENIED_403, accessDeniedException);
-		// 一键登录用户与当前用户不匹配处理
-		if (accessDeniedException instanceof AnotherUserLoginedAccessDeniedException) {
-			// forward to error page.
-			request.getRequestDispatcher(requestMatcher.matches(request) ?
-				Routes.OAUTH_DENIED_UNMATCHUSER_HTML : Routes.OAUTH_DENIED_UNMATCHUSER)
-				.forward(request, response);
-		} else if (accessDeniedException instanceof NotRequiredUserAccessDeniedException) {
-			request.getRequestDispatcher(Routes.OAUTH_DENIED_NOTREQUIREDUSER_HTML)
-				.forward(request, response);
-		} else {
-			// Set the 403 status code.
-			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-		}
-	}
+  @Override
+  public void handle(HttpServletRequest request, HttpServletResponse response,
+    AccessDeniedException accessDeniedException) throws IOException, ServletException {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth != null) {
+      LOGGER.info("User '" + auth.getName()
+        + "' attempted to access the protected URL: "
+        + request.getRequestURI());
+    }
+
+    if (response.isCommitted()) {
+      return;
+    }
+    // Put exception into request scope (perhaps of use to a view)
+    request.setAttribute(WebAttributes.ACCESS_DENIED_403, accessDeniedException);
+    // 一键登录用户与当前用户不匹配处理
+    if (accessDeniedException instanceof AnotherUserLoginedAccessDeniedException) {
+      // forward to error page.
+      request.getRequestDispatcher(REQUEST_MATCHER.matches(request) ?
+        Routes.OAUTH_DENIED_UNMATCHUSER_HTML : Routes.OAUTH_DENIED_UNMATCHUSER)
+        .forward(request, response);
+    } else if (accessDeniedException instanceof NotRequiredUserAccessDeniedException) {
+      request.getRequestDispatcher(Routes.OAUTH_DENIED_NOTREQUIREDUSER_HTML)
+        .forward(request, response);
+    } else {
+      // Set the 403 status code.
+      response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+    }
+  }
 }

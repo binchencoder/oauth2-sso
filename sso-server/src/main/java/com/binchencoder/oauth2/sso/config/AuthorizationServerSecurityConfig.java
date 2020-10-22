@@ -313,11 +313,11 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 	}
 
 	private JRequiredUserCheckFilter getJRequiredUserCheckFilter() {
-		return new JRequiredUserCheckFilter(new AndRequestMatcher(
-			new OrRequestMatcher(
+		return new JRequiredUserCheckFilter(new AndRequestMatcher(new OrRequestMatcher(
 				new AntPathRequestMatcher(Routes.DEFAULT, RequestMethod.GET.toString()),
 				new AntPathRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI,	RequestMethod.GET.toString())),
-			new NegatedRequestMatcher(new JUidCidTokenRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI))));
+			new NegatedRequestMatcher(new JUidCidTokenRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI)))
+		);
 	}
 
 	private List<SessionAuthenticationStrategy> getAuthenticationSessionStrategies() {
