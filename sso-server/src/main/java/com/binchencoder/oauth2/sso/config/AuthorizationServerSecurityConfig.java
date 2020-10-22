@@ -199,12 +199,13 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 
 	@Bean
 	public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient() {
-		DefaultAuthorizationCodeTokenResponseClient accessTokenResponseClient = new DefaultAuthorizationCodeTokenResponseClient();
+		DefaultAuthorizationCodeTokenResponseClient accessTokenResponseClient =
+			new DefaultAuthorizationCodeTokenResponseClient();
 		accessTokenResponseClient.setRequestEntityConverter(new CustomRequestEntityConverter());
 
-		OAuth2AccessTokenResponseHttpMessageConverter tokenResponseHttpMessageConverter = new OAuth2AccessTokenResponseHttpMessageConverter();
-		tokenResponseHttpMessageConverter
-			.setTokenResponseConverter(new JAccessTokenResponseConverter());
+		OAuth2AccessTokenResponseHttpMessageConverter tokenResponseHttpMessageConverter =
+			new OAuth2AccessTokenResponseHttpMessageConverter();
+		tokenResponseHttpMessageConverter.setTokenResponseConverter(new JAccessTokenResponseConverter());
 		RestTemplate restTemplate = new RestTemplate(
 			Arrays.asList(new FormHttpMessageConverter(), tokenResponseHttpMessageConverter));
 		restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
