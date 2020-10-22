@@ -8,6 +8,7 @@ import com.binchencoder.oauth2.sso.handler.JAccessDeniedHandler;
 import com.binchencoder.oauth2.sso.handler.JAuthenticationEntryPoint;
 import com.binchencoder.oauth2.sso.handler.NotifyLogoutSuccessHandler;
 import com.binchencoder.oauth2.sso.resover.LogoutNotifyAddressResover;
+import com.binchencoder.oauth2.sso.route.Routes;
 import com.binchencoder.oauth2.sso.service.AccessTokenRepresentSecurityContextRepository;
 import com.binchencoder.oauth2.sso.service.AuthenticationFailureCountingService;
 import com.binchencoder.oauth2.sso.service.JOAuth2AuthorizationService;
@@ -197,7 +198,7 @@ public class Configurations {
 	@Bean
 	public JAuthenticationEntryPoint jAuthenticationEntryPoint() {
 		return new JAuthenticationEntryPoint(new OrRequestMatcher(
-			new AntPathRequestMatcher("/", HttpMethod.GET.toString()),
+			new AntPathRequestMatcher(Routes.DEFAULT, HttpMethod.GET.toString()),
 			new AntPathRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI, HttpMethod.GET.toString()))
 		);
 	}

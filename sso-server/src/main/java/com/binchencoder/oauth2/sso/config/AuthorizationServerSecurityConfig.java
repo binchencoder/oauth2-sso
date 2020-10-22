@@ -57,7 +57,6 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
@@ -267,11 +266,10 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 	private JUsernamePasswordAuthenticationFilter getJUsernamePasswordAuthenticationFilter(
 		List<SessionAuthenticationStrategy> sessionStrategies) throws Exception {
 		JUsernamePasswordAuthenticationFilter formLogin = new JUsernamePasswordAuthenticationFilter();
-		JForwardAuthenticationSuccessHandler jForwardAuthenticationSuccessHandler =
-			new JForwardAuthenticationSuccessHandler();
+		JForwardAuthenticationSuccessHandler successHandler =	new JForwardAuthenticationSuccessHandler();
 		// TODO(binchencoder): Login success kafka message
-//    jForwardAuthenticationSuccessHandler.setKafkaStorageAdapter(kafkaStorageAdapter);
-		formLogin.setAuthenticationSuccessHandler(jForwardAuthenticationSuccessHandler);
+//    successHandler.setKafkaStorageAdapter(kafkaStorageAdapter);
+		formLogin.setAuthenticationSuccessHandler(successHandler);
 		formLogin.setAuthenticationFailureCountingService(authenticationFailureCountingService);
 		formLogin.setRequiresAuthenticationRequestMatcher(new OrRequestMatcher(
 			new AntPathRequestMatcher(Routes.DEFAULT, RequestMethod.POST.toString()),
