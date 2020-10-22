@@ -45,8 +45,8 @@ public class JUidCidTokenAuthenticationFilter extends AbstractAuthenticationProc
 		super(new JUidCidTokenRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI,
 			RequestMethod.GET.toString()));
 
-		setAuthenticationDetailsSource(new JWebAuthenticationDetailsSource());
-		setContinueChainBeforeSuccessfulAuthentication(true);
+		super.setAuthenticationDetailsSource(new JWebAuthenticationDetailsSource());
+		super.setContinueChainBeforeSuccessfulAuthentication(true);
 	}
 
 	@Override

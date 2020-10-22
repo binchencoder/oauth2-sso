@@ -36,6 +36,7 @@ import com.binchencoder.oauth2.sso.service.AccessTokenRepresentSecurityContextRe
 import com.binchencoder.oauth2.sso.service.AuthenticationFailureCountingService;
 import com.binchencoder.oauth2.sso.service.JUserDetails;
 import com.binchencoder.oauth2.sso.service.JWebAuthenticationDetails;
+import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -55,8 +56,8 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
@@ -76,6 +77,7 @@ import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.client.RestTemplate;
 
@@ -131,8 +133,6 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 	// @formatter:off
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		OAuth2AuthorizationServerSecurity.applyDefaultConfiguration(http);
-
 		http.setSharedObject(SecurityContextRepository.class,
 			accessTokenRepresentSecurityContextRepository);
 		http.setSharedObject(OAuth2AuthorizationService.class, oAuth2AuthorizationService);
@@ -142,10 +142,16 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 		JUsernamePasswordAuthenticationFilter jUsernamePasswordAuthenticationFilter =
 			this.getJUsernamePasswordAuthenticationFilter(sessionStrategies);
 
+		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
+				new OAuth2AuthorizationServerConfigurer<>();
+		List<RequestMatcher> requestMatchers = Lists.newCopyOnWriteArrayList(
+		  authorizationServerConfigurer.getEndpointMatchers());
+		requestMatchers.add(JUsernamePasswordAuthenticationFilter.J_USERNAME_PASSWORD_REQUEST_MATCHER);
+
 		http
+      .requestMatcher(new OrRequestMatcher(requestMatchers.toArray(new RequestMatcher[0])))
+      .authorizeRequests(authorizeRequests -> authorizeRequests.anyRequest().authenticated())
 			.httpBasic().and() // it indicate basic authentication is requires
-//			.authorizeRequests()
-//			  .antMatchers(Routes.DEFAULT, Routes.LOGIN).permitAll().and()
 //			.formLogin()
 //        .successHandler()
 //			.loginPage(Routes.LOGIN)
@@ -177,7 +183,8 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 				getJRequiredUserCheckFilter().getClass())
 			// 一键登录 --> 使可以被异常捕获
 			.addFilterAfter(getJUidCidTokenAuthenticationFilter(sessionStrategies),
-				AbstractPreAuthenticatedProcessingFilter.class);
+				AbstractPreAuthenticatedProcessingFilter.class)
+      .apply(authorizationServerConfigurer);
 
 		// maximumSessions配置一个用户的最大session数量, 默认不限,这里设1。先在一个浏览器如chrome登录,
 		// 然后在另一个浏览器如firefox登录,此时同时登录数为2超出参数1,之前chrome的session将会过期,
@@ -272,9 +279,6 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 //    successHandler.setKafkaStorageAdapter(kafkaStorageAdapter);
 		formLogin.setAuthenticationSuccessHandler(successHandler);
 		formLogin.setAuthenticationFailureCountingService(authenticationFailureCountingService);
-		formLogin.setRequiresAuthenticationRequestMatcher(new OrRequestMatcher(
-			new AntPathRequestMatcher(Routes.DEFAULT, RequestMethod.POST.toString()),
-			new AntPathRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI, RequestMethod.POST.toString())));
 		formLogin.setAuthenticationManager(authenticationManagerBean());
 		formLogin.setUsernameParameter(OAuth2ParameterNames.USERNAME);
 		formLogin.setPasswordParameter(OAuth2ParameterNames.PASSWORD);
