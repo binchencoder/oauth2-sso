@@ -43,6 +43,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
@@ -103,6 +104,7 @@ public class Configurations {
 			.redirectUris(uris -> uris.addAll(redirectUris))
 			.scope("message.read")
 			.scope("message.write")
+			.clientSettings((client) -> new ClientSettings())
 			.build();
 		return new InMemoryRegisteredClientRepository(registeredClient);
 	}
