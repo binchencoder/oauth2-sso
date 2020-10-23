@@ -34,7 +34,7 @@ public class JAuthenticationEntryPoint
 	private String loginPage = "/";
 	private RequestMatcher entryPointMatcher;
 
-	private RequestMatcher jTokenRequestMatcher = new JUidCidTokenRequestMatcher(
+	private static final RequestMatcher J_TOKEN_REQUEST_MATCHER = new JUidCidTokenRequestMatcher(
 		DEFAULT_AUTHORIZATION_ENDPOINT_URI, RequestMethod.GET.toString());
 
 	public JAuthenticationEntryPoint(RequestMatcher entryPointMatcher) {
@@ -48,7 +48,7 @@ public class JAuthenticationEntryPoint
 		if (!response.isCommitted()) {
 			request.setAttribute(WebAttributes.AUTHENTICATION_EXCEPTION, exception);
 			String dispatcherUrl = Routes.OAUTH_FAILURE;
-			if (jTokenRequestMatcher.matches(request)) {
+			if (J_TOKEN_REQUEST_MATCHER.matches(request)) {
 				dispatcherUrl = Routes.OAUTH_FAILURE_HTML;
 			}
 			RequestDispatcher dispatcher = request.getRequestDispatcher(dispatcherUrl);

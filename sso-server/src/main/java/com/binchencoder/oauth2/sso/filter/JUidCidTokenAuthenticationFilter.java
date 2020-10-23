@@ -96,5 +96,4 @@ public class JUidCidTokenAuthenticationFilter extends AbstractAuthenticationProc
 		super.unsuccessfulAuthentication(request, response, failed);
 		SecurityContextHolder.getContext().setAuthentication(auth);
 	}
-
 }

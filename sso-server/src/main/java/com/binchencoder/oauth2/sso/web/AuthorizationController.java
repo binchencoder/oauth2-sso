@@ -154,9 +154,7 @@ public class AuthorizationController {
 		Map<String, Object> ret = new HashMap<>();
 		// 登录名记忆
 		String username = request.getParameter("username");
-		if (username != null && !username.isEmpty()
-			&& (username.contains("@") || mobilePattern.matcher(username).matches())) { // 包含 @
-			// 符号的登录名才进行记忆
+		if (StringUtils.isNotEmpty(username) || mobilePattern.matcher(username).matches()) {
 			ret.put("username", username);
 		}
 

@@ -12,13 +12,13 @@ import com.binchencoder.oauth2.sso.route.Routes;
 import com.binchencoder.oauth2.sso.service.AccessTokenRepresentSecurityContextRepository;
 import com.binchencoder.oauth2.sso.service.AuthenticationFailureCountingService;
 import com.binchencoder.oauth2.sso.service.JOAuth2AuthorizationService;
+import com.binchencoder.oauth2.sso.service.JRegisteredClientRepository;
 import com.binchencoder.oauth2.sso.service.JUserDetailsService;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -37,13 +37,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.keys.KeyManager;
 import org.springframework.security.crypto.keys.StaticKeyGeneratingKeyManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
@@ -88,25 +83,7 @@ public class Configurations {
 
 	@Bean
 	public RegisteredClientRepository registeredClientRepository() {
-		Set<String> redirectUris = new HashSet<>(2);
-		redirectUris.add("http://www.baidu.com");
-		redirectUris.add("http://localhost:8080/authorized");
-
-		RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-			.clientId("messaging-client")
-			.clientSecret("secret")
-			.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
-			.clientAuthenticationMethod(ClientAuthenticationMethod.POST)
-			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-			.authorizationGrantType(AuthorizationGrantType.PASSWORD)
-			.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-			.redirectUris(uris -> uris.addAll(redirectUris))
-			.scope("message.read")
-			.scope("message.write")
-			.clientSettings((client) -> new ClientSettings())
-			.build();
-		return new InMemoryRegisteredClientRepository(registeredClient);
+		return new JRegisteredClientRepository();
 	}
 
 	@Bean
