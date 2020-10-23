@@ -4,11 +4,14 @@ import static org.springframework.security.oauth2.server.authorization.web.OAuth
 
 import com.binchencoder.oauth2.sso.matcher.JUidCidTokenRequestMatcher;
 import com.binchencoder.oauth2.sso.route.Routes;
+import com.binchencoder.oauth2.sso.service.AccessTokenRepresentSecurityContextRepository;
 import java.io.IOException;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.AuthenticationException;
@@ -58,14 +61,14 @@ public class JAuthenticationEntryPoint
 		AuthenticationException authException) throws IOException, ServletException {
 		LOGGER.debug("commence authenticationException", authException);
 
-		// 账号停用、冻结、公司停用 等情况。 需要清理当前的 Cookie，防止进入无限循环提示。
-//    Cookie cookie = AccessTokenRepresentSecurityContextRepository
-//        .getOrNewAccessTokenCookie(request);
-//    if (StringUtils.isNotBlank(cookie.getValue())) {
-//      cookie.setValue("");
-//      cookie.setMaxAge(0);
-//      response.addCookie(cookie);
-//    }
+		// 账号停用、冻结、公司停用 等情况. 需要清理当前的 Cookie，防止进入无限循环提示.
+    Cookie cookie = AccessTokenRepresentSecurityContextRepository
+        .getOrNewAccessTokenCookie(request);
+    if (StringUtils.isNotBlank(cookie.getValue())) {
+      cookie.setValue("");
+      cookie.setMaxAge(0);
+      response.addCookie(cookie);
+    }
 
 		if (!response.isCommitted()) {
 			if (entryPointMatcher.matches(request)) {
