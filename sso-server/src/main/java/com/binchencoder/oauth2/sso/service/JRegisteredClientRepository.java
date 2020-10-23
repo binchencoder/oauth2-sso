@@ -1,5 +1,6 @@
 package com.binchencoder.oauth2.sso.service;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -8,6 +9,7 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
 
 /**
  * Implements for OAuth 2.0 {@link RegisteredClient}(s).
@@ -41,9 +43,10 @@ public class JRegisteredClientRepository implements RegisteredClientRepository {
 			.authorizationGrantType(AuthorizationGrantType.PASSWORD)
 			.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 			.redirectUris(uris -> uris.addAll(redirectUris))
-			.scope("message.read")
-			.scope("message.write")
+//			.scope("message.read")
+//			.scope("message.write")
 			.clientSettings((client) -> new ClientSettings())
+			.tokenSettings((token) -> new TokenSettings().accessTokenTimeToLive(Duration.ofSeconds(20)))
 			.build();
 		return registeredClient;
 	}
