@@ -17,7 +17,7 @@ import org.springframework.security.web.context.SecurityContextRepository;
 
 public class AccessTokenRepresentSecurityContextRepository implements SecurityContextRepository {
 
-	private static final String SESSIONID = "TSESSIONID";
+	private static final String TSESSIONID = "TSESSIONID";
 
 	@Autowired
 	private AuthnService authnService;
@@ -77,14 +77,14 @@ public class AccessTokenRepresentSecurityContextRepository implements SecurityCo
 		Cookie[] cookies = request.getCookies();
 		if (cookies != null && cookies.length > 0) {
 			for (Cookie c : cookies) {
-				if (SESSIONID.equals(c.getName())) {
+				if (TSESSIONID.equals(c.getName())) {
 					cookie = c;
 				}
 			}
 		}
 
 		if (cookie == null) {
-			cookie = new Cookie(SESSIONID, "");
+			cookie = new Cookie(TSESSIONID, "");
 		}
 
 		cookie.setHttpOnly(true);

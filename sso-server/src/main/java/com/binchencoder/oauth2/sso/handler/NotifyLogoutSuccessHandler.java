@@ -1,5 +1,6 @@
 package com.binchencoder.oauth2.sso.handler;
 
+import com.binchencoder.oauth2.account.service.AuthnService;
 import com.binchencoder.oauth2.sso.resover.LogoutNotifyAddressResover;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -32,6 +33,8 @@ public class NotifyLogoutSuccessHandler extends AbstractAuthenticationTargetUrlR
 
   private LogoutNotifyAddressResover logoutNotifyAddressResover;
 
+	private AuthnService authnService;
+
   public NotifyLogoutSuccessHandler() {
   }
 
@@ -42,6 +45,10 @@ public class NotifyLogoutSuccessHandler extends AbstractAuthenticationTargetUrlR
   public void setLogoutNotifyAddressResover(LogoutNotifyAddressResover logoutNotifyAddressResover) {
     this.logoutNotifyAddressResover = logoutNotifyAddressResover;
   }
+
+	public void setAuthnService(AuthnService authnService) {
+		this.authnService = authnService;
+	}
 
   @Override
   public void afterPropertiesSet() {
@@ -59,7 +66,7 @@ public class NotifyLogoutSuccessHandler extends AbstractAuthenticationTargetUrlR
         return;
       }
       List<String> notifies = logoutNotifyAddressResover.resove(request, authentication);
-      notifies = notifies == null ? new ArrayList<String>() : notifies;
+      notifies = notifies == null ? new ArrayList<>() : notifies;
 
       Cookie cookie = new Cookie("apps", "");
       cookie.setHttpOnly(true);

@@ -334,6 +334,8 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 				if (persist) {
 					cookie.setMaxAge(30 * 24 * 60 * 60);
 				}
+				// For test, 设置'TSESSIONID' cookie 有效期为5分钟
+				cookie.setMaxAge(5 * 60);
 
 				response.addCookie(cookie);
 				if (LOGGER.isDebugEnabled()) {

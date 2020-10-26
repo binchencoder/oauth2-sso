@@ -1,15 +1,12 @@
 package com.binchencoder.oauth2.sso.service;
 
-import java.time.Duration;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
-import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
+import org.springframework.util.Assert;
 
 /**
  * Implements for OAuth 2.0 {@link RegisteredClient}(s).
@@ -18,6 +15,37 @@ import org.springframework.security.oauth2.server.authorization.config.TokenSett
  */
 public class JRegisteredClientRepository implements RegisteredClientRepository {
 
+	private final Map<String, RegisteredClient> clientIdRegistrationMap;
+
+	/**
+	 * Constructs an {@code JRegisteredClientRepository} using the provided parameters.
+	 *
+	 * @param registrations the client registration(s)
+	 */
+	public JRegisteredClientRepository(RegisteredClient... registrations) {
+		this(Arrays.asList(registrations));
+	}
+
+	/**
+	 * Constructs an {@code JRegisteredClientRepository} using the provided parameters.
+	 *
+	 * @param registrations the client registration(s)
+	 */
+	public JRegisteredClientRepository(List<RegisteredClient> registrations) {
+		Assert.notEmpty(registrations, "registrations cannot be empty");
+		ConcurrentHashMap<String, RegisteredClient> clientIdRegistrationMapResult = new ConcurrentHashMap<>();
+		for (RegisteredClient registration : registrations) {
+			Assert.notNull(registration, "registration cannot be null");
+			String clientId = registration.getClientId();
+			if (clientIdRegistrationMapResult.containsKey(clientId)) {
+				throw new IllegalArgumentException("Registered client must be unique. " +
+					"Found duplicate client identifier: " + clientId);
+			}
+			clientIdRegistrationMapResult.put(clientId, registration);
+		}
+		this.clientIdRegistrationMap = clientIdRegistrationMapResult;
+	}
+
 	@Override
 	public RegisteredClient findById(String id) {
 		return null;
@@ -25,29 +53,7 @@ public class JRegisteredClientRepository implements RegisteredClientRepository {
 
 	@Override
 	public RegisteredClient findByClientId(String clientId) {
-		if (!clientId.equals("messaging-client")) {
-			return null;
-		}
-
-		Set<String> redirectUris = new HashSet<>(2);
-		redirectUris.add("http://www.baidu.com");
-		redirectUris.add("http://localhost:8080/authorized");
-
-		RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-			.clientId("messaging-client")
-			.clientSecret("secret")
-			.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
-			.clientAuthenticationMethod(ClientAuthenticationMethod.POST)
-			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-			.authorizationGrantType(AuthorizationGrantType.PASSWORD)
-			.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-			.redirectUris(uris -> uris.addAll(redirectUris))
-//			.scope("message.read")
-//			.scope("message.write")
-			.clientSettings((client) -> new ClientSettings())
-			.tokenSettings((token) -> new TokenSettings().accessTokenTimeToLive(Duration.ofSeconds(20)))
-			.build();
-		return registeredClient;
+		Assert.hasText(clientId, "clientId cannot be empty");
+		return this.clientIdRegistrationMap.get(clientId);
 	}
 }

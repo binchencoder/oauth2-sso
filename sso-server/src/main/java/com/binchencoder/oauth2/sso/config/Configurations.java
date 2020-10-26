@@ -14,11 +14,14 @@ import com.binchencoder.oauth2.sso.service.AuthenticationFailureCountingService;
 import com.binchencoder.oauth2.sso.service.JOAuth2AuthorizationService;
 import com.binchencoder.oauth2.sso.service.JRegisteredClientRepository;
 import com.binchencoder.oauth2.sso.service.JUserDetailsService;
+import com.google.common.collect.Lists;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -37,8 +40,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.keys.KeyManager;
 import org.springframework.security.crypto.keys.StaticKeyGeneratingKeyManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
@@ -52,6 +60,9 @@ public class Configurations {
 
 	@Autowired
 	private Environment env;
+
+	@Autowired
+	private AuthnService authnService;
 
 	@Bean(name = "daoAuthenticationProvider")
 	public DaoAuthenticationProvider authenticationProvider() {
@@ -83,13 +94,34 @@ public class Configurations {
 
 	@Bean
 	public RegisteredClientRepository registeredClientRepository() {
-		return new JRegisteredClientRepository();
+		List<RegisteredClient> clients = Lists.newArrayList();
+		clients.add(RegisteredClient.withId(UUID.randomUUID().toString())
+			.clientId("messaging-client")
+			.clientSecret("secret")
+			.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
+			.clientAuthenticationMethod(ClientAuthenticationMethod.POST)
+			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+			.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+			.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+			.redirectUris(uris -> {
+				uris.add("http://www.baidu.com");
+				uris.add("http://localhost:8080/authorized");
+			})
+//			.scope("message.read")
+//			.scope("message.write")
+			.clientSettings((client) -> new ClientSettings())
+			.tokenSettings((token) -> new TokenSettings().accessTokenTimeToLive(Duration.ofSeconds(20)))
+			.build());
+
+		return new JRegisteredClientRepository(clients);
 	}
 
 	@Bean
 	public NotifyLogoutSuccessHandler notifyLogoutSuccessHandler(
 		LogoutNotifyAddressResover logoutNotifyAddressResover) {
 		NotifyLogoutSuccessHandler handler = new NotifyLogoutSuccessHandler(logoutNotifyAddressResover);
+		handler.setAuthnService(authnService);
 		return handler;
 	}
 
@@ -145,7 +177,7 @@ public class Configurations {
 					}
 				}
 			}
-			return new ArrayList<String>(notifies);
+			return new ArrayList<>(notifies);
 		};
 	}
 
