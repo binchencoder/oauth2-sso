@@ -1,7 +1,10 @@
 server:
   port: 9000
 
+# logging
 logging:
+  file:
+    path: ./sso-server/logs
   level:
     root: INFO
     com.binchencoder.oauth2: INFO

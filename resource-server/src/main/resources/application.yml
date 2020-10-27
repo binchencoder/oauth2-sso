@@ -1,7 +1,10 @@
 server:
   port: 8092
 
+# loggin
 logging:
+  file:
+    path: ./resource-server/logs
   level:
     root: DEBUG
     com.binchencoder.oauth2: INFO
@@ -11,6 +14,8 @@ logging:
     org.springframework.boot.autoconfigure: DEBUG
 
 spring:
+  application:
+    name: resource-server
   security:
     oauth2:
       resourceserver:

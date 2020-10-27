@@ -1,7 +1,10 @@
 server:
   port: 8080
 
+# loggin
 logging:
+  file:
+    path: ./client-app/logs
   level:
     root: INFO
     com.binchencoder.oauth2: INFO
@@ -11,6 +14,8 @@ logging:
     org.springframework.boot.autoconfigure: DEBUG
 
 spring:
+  application:
+    name: client-app
   thymeleaf:
     cache: false
   security:
