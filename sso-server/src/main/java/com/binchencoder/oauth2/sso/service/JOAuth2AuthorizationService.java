@@ -13,6 +13,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.TokenType;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
 import org.springframework.util.Assert;
 
 public class JOAuth2AuthorizationService implements OAuth2AuthorizationService {
@@ -66,10 +67,15 @@ public class JOAuth2AuthorizationService implements OAuth2AuthorizationService {
 
 	private boolean hasToken(OAuth2Authorization authorization, String token, TokenType tokenType) {
 		if (TokenType.AUTHORIZATION_CODE.equals(tokenType)) {
-			return token.equals(authorization.getAttribute(OAuth2AuthorizationAttributeNames.CODE));
+			OAuth2AuthorizationCode authorizationCode = authorization.getTokens()
+				.getToken(OAuth2AuthorizationCode.class);
+			return authorizationCode != null && authorizationCode.getTokenValue().equals(token);
 		} else if (TokenType.ACCESS_TOKEN.equals(tokenType)) {
-			return authorization.getAccessToken() != null &&
-				authorization.getAccessToken().getTokenValue().equals(token);
+			return authorization.getTokens().getAccessToken() != null &&
+				authorization.getTokens().getAccessToken().getTokenValue().equals(token);
+		} else if (TokenType.REFRESH_TOKEN.equals(tokenType)) {
+			return authorization.getTokens().getRefreshToken() != null &&
+				authorization.getTokens().getRefreshToken().getTokenValue().equals(token);
 		}
 		return false;
 	}
