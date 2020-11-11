@@ -73,8 +73,6 @@
         th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
 <script type="text/javascript">
   function logout(callback) {
-    alert("logout");
-
     //退出返回要清理其他域urls,jsonp回调
     if (!callback) {
       callback = 'logoutOther';
