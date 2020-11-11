@@ -42,7 +42,7 @@ spring:
 
 logout:
   notifies:
-    urls:
+    urls: http://localhost:8080/logout
 
 login:
   success:

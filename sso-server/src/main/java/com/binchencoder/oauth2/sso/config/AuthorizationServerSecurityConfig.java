@@ -147,6 +147,7 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 		List<RequestMatcher> requestMatchers = Lists.newCopyOnWriteArrayList(
 		  authorizationServerConfigurer.getEndpointMatchers());
 		requestMatchers.add(JUsernamePasswordAuthenticationFilter.J_USERNAME_PASSWORD_REQUEST_MATCHER);
+		requestMatchers.add(new AntPathRequestMatcher(Routes.LOGOUT, RequestMethod.GET.toString()));
 
 		http
       .requestMatcher(new OrRequestMatcher(requestMatchers.toArray(new RequestMatcher[0])))
@@ -164,11 +165,10 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 			  .authenticationEntryPoint(jAuthenticationEntryPoint)
 			  .accessDeniedHandler(jAccessDeniedHandler).and()
 			.csrf()
-			.requireCsrfProtectionMatcher(
-				new AntPathRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI)).disable()
+				.requireCsrfProtectionMatcher(new AntPathRequestMatcher(DEFAULT_AUTHORIZATION_ENDPOINT_URI))
+			.disable()
 			.logout()
 			  .logoutSuccessHandler(notifyLogoutSuccessHandler)
-			  .logoutUrl(Routes.LOGOUT)
 			  .addLogoutHandler(languageCleanLogoutHandler).and()
 			// 禁止匿名用户登录
 			.anonymous().disable()

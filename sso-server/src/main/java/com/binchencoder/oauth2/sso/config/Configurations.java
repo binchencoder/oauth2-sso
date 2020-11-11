@@ -190,7 +190,8 @@ public class Configurations {
 				String sessionCookieName = request.getServletContext().getSessionCookieConfig().getName();
 				sessionCookieName = sessionCookieName == null ? "JSESSIONID" : sessionCookieName;
 				for (Cookie cookie : cookies) {
-					if (sessionCookieName.equals(cookie.getName())) {
+					if (sessionCookieName.equals(cookie.getName())
+						|| AccessTokenRepresentSecurityContextRepository.TSESSIONID.equals(cookie.getName())) {
 						cookie.setPath("/");
 						cookie.setMaxAge(0);
 						response.addCookie(cookie);
@@ -274,5 +275,12 @@ public class Configurations {
 	@Bean
 	public AuthnService authnService() {
 		return new AuthnService();
+	}
+
+	private void deleteCookie(HttpServletResponse response, String cookieName) {
+		Cookie cookie = new Cookie(cookieName, "");
+		cookie.setPath("/");
+		cookie.setMaxAge(0);
+		response.addCookie(cookie);
 	}
 }

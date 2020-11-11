@@ -22,7 +22,9 @@
                 <span sec:authentication="name">User</span>
               </a>
               <ul class="dropdown-menu">
-                <li><a id="sign-out" href="javascript:document.logoutForm.submit()">Sign Out</a>
+                <li>
+                  <!--<a id="sign-out" href="javascript:document.logoutForm.submit()">Sign Out</a>-->
+                  <a id="sign-out" href="javascript:;" onclick="logout()">Sign Out</a>
                 </li>
               </ul>
               <form name="logoutForm" th:action="@{/logout}" method="post" th:hidden="true">
@@ -69,5 +71,89 @@
 <script src="/webjars/jquery/jquery.min.js" th:src="@{/webjars/jquery/jquery.min.js}"></script>
 <script src="/webjars/bootstrap/js/bootstrap.min.js"
         th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+<script type="text/javascript">
+  function logout(callback) {
+    alert("logout");
+
+    //退出返回要清理其他域urls,jsonp回调
+    if (!callback) {
+      callback = 'logoutOther';
+    }
+
+    var src = 'http://auth-server:9000/logout?callback=' + callback;
+    invokeOtherDomain(src, false);
+  }
+
+  function invokeOtherDomain(src, flag) {
+     var ele = document.createElement('script');
+     var v = new Date().getTime();
+     if (!flag) {
+         src = src.replace(/^http[s]?:\/\//, '//');
+     }
+     ele.src = src + (-1 === src.indexOf('?') ? '?' : '&') + 'v=' + v;
+     document.getElementsByTagName('head')[0].appendChild(ele);
+  }
+
+  function invokeOtherDomain(src, flag) {
+    var ele = document.createElement('script');
+    var v = new Date().getTime();
+    if (!flag) {
+        src = src.replace(/^http[s]?:\/\//, '//');
+    }
+    ele.src = src + (-1 === src.indexOf('?') ? '?' : '&') + 'v=' + v;
+    document.getElementsByTagName('head')[0].appendChild(ele);
+  }
+
+  //退出jsonp回调, callback:为xp账号切换退出
+  window.logoutOther = function (urls, callback) {
+      var ssoHost = ("auth-server".match(/^((\w+):\/\/)?((\w+):?(\w+)?@)?([^\/\?:]+):?(\d+)?(\/?[^\?#]+)?\??([^#]+)?#?(\w*)/))[6];
+      var next = function () {
+          var url, host, img;
+          if (urls.length) {
+              url = urls.shift();
+              host = (url.match(/^((\w+):\/\/)?((\w+):?(\w+)?@)?([^\/\?:]+):?(\d+)?(\/?[^\?#]+)?\??([^#]+)?#?(\w*)/))[6];
+              if (host === location.host) {
+                  <!--url = url.replace(/^http[s]?:\/\//, '//');-->
+                  <!--httpUtil.ajax({-->
+                      <!--method: 'get',-->
+                      <!--url: url,-->
+                      <!--callback: next-->
+                  <!--});-->
+              } else {
+                  if (ssoHost !== host) {
+                      img = document.createElement('img');
+                      img.src = url;
+                  } else {
+                      invokeOtherDomain(url);
+                  }
+                  next();
+              }
+          } else {
+              if (!callback) {
+                  setTimeout(gotoSSOlogin(true), 200);
+                  return;
+              } else {
+                  setTimeout(callback(), 200);
+              }
+          }
+      };
+      next();
+      return;
+  }
+
+  function gotoSSOlogin(isFromLoginout) {
+    <!--var url = location.href.replace(location.search, BrowerUtil.getLocationUrl());-->
+    <!--if (isFromLoginout) {-->
+      <!--//退出后再登陆，需进入工作台，而非退出时所在的模块-->
+      <!--var host = location.hostname,-->
+          <!--port = location.port;-->
+      <!--if (port && port !== '80') {-->
+          <!--host += ':' + port;-->
+      <!--}-->
+      <!--url = location.protocol + '//' + host + '/';-->
+
+      window.location.reload(true);
+  }
+</script>
 </body>
 </html>

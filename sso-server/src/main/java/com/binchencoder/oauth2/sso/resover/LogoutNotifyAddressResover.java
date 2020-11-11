@@ -9,6 +9,6 @@ import org.springframework.security.core.Authentication;
  */
 public interface LogoutNotifyAddressResover {
 
-  List<String> resove(HttpServletRequest request, Authentication authentication);
+  List<String> resolve(HttpServletRequest request, Authentication authentication);
 
 }

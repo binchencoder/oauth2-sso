@@ -12,7 +12,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 public class JUidCidTokenRequestMatcher implements RequestMatcher {
 
-	private static final Logger logger = LoggerFactory.getLogger(JUidCidTokenRequestMatcher.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(JUidCidTokenRequestMatcher.class);
 
 	private RequestMatcher pathMatcher;
 
@@ -89,7 +89,7 @@ public class JUidCidTokenRequestMatcher implements RequestMatcher {
 					new JUidCidTokenAuthenticationToken(uid.trim(), pcid, token, alias));
 				return true;
 			} catch (NumberFormatException e) {
-				logger.debug("一键登录参数错误", e);
+				LOGGER.debug("一键登录参数错误", e);
 			}
 		}
 		return false;

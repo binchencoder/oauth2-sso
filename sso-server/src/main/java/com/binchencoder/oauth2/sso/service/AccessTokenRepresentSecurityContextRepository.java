@@ -17,7 +17,7 @@ import org.springframework.security.web.context.SecurityContextRepository;
 
 public class AccessTokenRepresentSecurityContextRepository implements SecurityContextRepository {
 
-	private static final String TSESSIONID = "TSESSIONID";
+	public static final String TSESSIONID = "TSESSIONID";
 
 	@Autowired
 	private AuthnService authnService;

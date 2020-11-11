@@ -25,7 +25,7 @@ import org.springframework.util.Assert;
 public class NotifyLogoutSuccessHandler extends AbstractAuthenticationTargetUrlRequestHandler
     implements LogoutSuccessHandler, InitializingBean {
 
-  private final Logger logger = LoggerFactory.getLogger(NotifyLogoutSuccessHandler.class);
+  private final Logger LOGGER = LoggerFactory.getLogger(NotifyLogoutSuccessHandler.class);
 
   private final ObjectMapper mapper = new ObjectMapper();
   // JSONP 回调方式 XSS 攻击过滤
@@ -61,11 +61,11 @@ public class NotifyLogoutSuccessHandler extends AbstractAuthenticationTargetUrlR
     String callback = request.getParameter("callback");
     if (callback != null && !callback.isEmpty()) {
       if (!pattern.matcher(callback).matches()) {
-        logger.warn("JSONP XSS attack, callback：{}", callback);
+        LOGGER.warn("JSONP XSS attack, callback：{}", callback);
         response.sendError(HttpServletResponse.SC_BAD_REQUEST, "非法Callbcak方法名");
         return;
       }
-      List<String> notifies = logoutNotifyAddressResover.resove(request, authentication);
+      List<String> notifies = logoutNotifyAddressResover.resolve(request, authentication);
       notifies = notifies == null ? new ArrayList<>() : notifies;
 
       Cookie cookie = new Cookie("apps", "");
