@@ -73,6 +73,7 @@ import org.springframework.security.web.authentication.preauth.AbstractPreAuthen
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.firewall.StrictHttpFirewall;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
@@ -119,13 +120,16 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 		auth.eraseCredentials(false);
-
 		auth.authenticationProvider(authenticationProvider);
 	}
 
 	@Override
 	public void configure(WebSecurity web) {
+		StrictHttpFirewall firewall = new StrictHttpFirewall();
+		// 去掉";"黑名单
+		firewall.setAllowSemicolon(true);
 		web
+			.httpFirewall(firewall) // 加入自定义的防火墙
 			.ignoring()
 			.antMatchers("/webjars/**");
 	}
@@ -169,7 +173,8 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 			.disable()
 			.logout()
 			  .logoutSuccessHandler(notifyLogoutSuccessHandler)
-			  .addLogoutHandler(languageCleanLogoutHandler).and()
+			  .addLogoutHandler(languageCleanLogoutHandler)
+				.clearAuthentication(true).and()
 			// 禁止匿名用户登录
 			.anonymous().disable()
 			// 认证服务内部异常处理

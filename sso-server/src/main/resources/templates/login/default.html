@@ -5,7 +5,8 @@
   <meta charset="utf-8"/>
   <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <link rel="stylesheet" href="/webjars/bootstrap/css/bootstrap.css" />
+  <link rel="stylesheet" href="/webjars/bootstrap/css/bootstrap.css"
+        th:href="@{/webjars/bootstrap/css/bootstrap.css}"/>
 </head>
 <body>
 <div class="container">
@@ -31,8 +32,10 @@
     <!--<button id="submitLogin" class="btn btn-primary">Log in</button>-->
   </form>
 </div>
-<script src="/webjars/jquery/jquery.min.js" />
-<script src="/webjars/bootstrap/js/bootstrap.min.js" />
+<script src="/webjars/jquery/jquery.min.js"
+        th:src="@{/webjars/jquery/jquery.min.js}"></script>
+<script src="/webjars/bootstrap/js/bootstrap.min.js"
+        th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
 <script type="text/javascript">
   var parseSearch = function(search) {
     return search.replace(/(uid|cid|token|account)=[^&]+&?/gi, "").replace(/redirect_uri=([^&]+)/gi, function($0, $1) {
