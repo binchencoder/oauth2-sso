@@ -40,6 +40,9 @@ spring:
   mvc:
     static-path-pattern: /**
     log-request-details: true
+    view:
+      prefix: classpath:/templates/
+      suffix: .html
 
 logout:
   notifies:
