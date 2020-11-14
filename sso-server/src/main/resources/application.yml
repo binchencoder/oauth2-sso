@@ -38,6 +38,7 @@ spring:
 #            token-uri: http://auth-server:9000/oauth2/token
 #            jwk-set-uri: http://auth-server:9000/oauth2/jwks
   mvc:
+    static-path-pattern: /**
     log-request-details: true
 
 logout:

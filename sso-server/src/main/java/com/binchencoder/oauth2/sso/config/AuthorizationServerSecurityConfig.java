@@ -131,7 +131,7 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 		web
 			.httpFirewall(firewall) // 加入自定义的防火墙
 			.ignoring()
-			.antMatchers("/webjars/**");
+			.antMatchers("/webjars/**", "/js/**", "/css/**", "/img/**");
 	}
 
 	// @formatter:off
