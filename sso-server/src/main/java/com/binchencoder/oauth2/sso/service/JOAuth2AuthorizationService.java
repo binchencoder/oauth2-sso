@@ -1,19 +1,17 @@
 package com.binchencoder.oauth2.sso.service;
 
-import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.SpringSecurityCoreVersion;
-import org.springframework.security.oauth2.core.AbstractOAuth2Token;
+import org.springframework.lang.Nullable;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.OAuth2TokenType;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationAttributeNames;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.TokenType;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2AuthorizationCode;
 import org.springframework.util.Assert;
 
 public class JOAuth2AuthorizationService implements OAuth2AuthorizationService {
@@ -21,22 +19,12 @@ public class JOAuth2AuthorizationService implements OAuth2AuthorizationService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(JOAuth2AuthorizationService.class);
 
 	// TODO(binchencoder): store db
-	private final Map<OAuth2AuthorizationId, OAuth2Authorization> authorizations = new ConcurrentHashMap<>();
+	private final Map<String, OAuth2Authorization> authorizations = new ConcurrentHashMap<>();
 
 	@Override
 	public void save(OAuth2Authorization authorization) {
 		Assert.notNull(authorization, "authorization cannot be null");
-		Object accessTokenAttr = authorization
-			.getAttribute(OAuth2AuthorizationAttributeNames.ACCESS_TOKEN_ATTRIBUTES);
-		if (null != accessTokenAttr) { // Save accessToken
-			AbstractOAuth2Token accessToken = (AbstractOAuth2Token) accessTokenAttr;
-		} else { // Save authorization code
-
-		}
-
-		OAuth2AuthorizationId authorizationId = new OAuth2AuthorizationId(
-			authorization.getRegisteredClientId(), authorization.getPrincipalName());
-		this.authorizations.put(authorizationId, authorization);
+		this.authorizations.put(authorization.getId(), authorization);
 	}
 
 	@Override
@@ -44,69 +32,78 @@ public class JOAuth2AuthorizationService implements OAuth2AuthorizationService {
 
 	}
 
+	@Nullable
 	@Override
-	public OAuth2Authorization findByToken(String token, TokenType tokenType) {
+	public OAuth2Authorization findById(String id) {
+		Assert.hasText(id, "id cannot be empty");
+		return this.authorizations.get(id);
+	}
+
+	@Nullable
+	@Override
+	public OAuth2Authorization findByToken(String token, OAuth2TokenType tokenType) {
 		Assert.hasText(token, "token cannot be empty");
-		OAuth2Authorization auth = this.authorizations.values().stream()
+//		OAuth2Authorization auth = this.authorizations.values().stream()
+//			.filter(authorization -> hasToken(authorization, token, tokenType))
+//			.findFirst()
+//			.orElse(null);
+//		if (null == auth) {
+//			LOGGER.warn("Not found OAuth2Authorization by token:{}", token);
+//		}
+//
+//		OAuth2Authorization.Builder authBuilder = OAuth2Authorization.from(auth);
+//		// TODO(binchencoder): get from db
+//		Map<String, Object> addition = new HashMap<>();
+//		addition.put("userId", 179);
+//		addition.put("companyId", 10);
+//		authBuilder.attributes(u -> u.putAll(addition));
+//
+//		return authBuilder.build();
+
+		return this.authorizations.values().stream()
 			.filter(authorization -> hasToken(authorization, token, tokenType))
 			.findFirst()
 			.orElse(null);
-		if (null == auth) {
-			LOGGER.warn("Not found OAuth2Authorization by token:{}", token);
-		}
-
-		OAuth2Authorization.Builder authBuilder = OAuth2Authorization.from(auth);
-		// TODO(binchencoder): get from db
-		Map<String, Object> addition = new HashMap<>();
-		addition.put("userId", 179);
-		addition.put("companyId", 10);
-		authBuilder.attributes(u -> u.putAll(addition));
-
-		return authBuilder.build();
 	}
 
-	private boolean hasToken(OAuth2Authorization authorization, String token, TokenType tokenType) {
-		if (TokenType.AUTHORIZATION_CODE.equals(tokenType)) {
-			OAuth2AuthorizationCode authorizationCode = authorization.getTokens()
-				.getToken(OAuth2AuthorizationCode.class);
-			return authorizationCode != null && authorizationCode.getTokenValue().equals(token);
-		} else if (TokenType.ACCESS_TOKEN.equals(tokenType)) {
-			return authorization.getTokens().getAccessToken() != null &&
-				authorization.getTokens().getAccessToken().getTokenValue().equals(token);
-		} else if (TokenType.REFRESH_TOKEN.equals(tokenType)) {
-			return authorization.getTokens().getRefreshToken() != null &&
-				authorization.getTokens().getRefreshToken().getTokenValue().equals(token);
+	private static boolean hasToken(OAuth2Authorization authorization, String token,
+		@Nullable OAuth2TokenType tokenType) {
+		if (tokenType == null) {
+			return matchesState(authorization, token) ||
+				matchesAuthorizationCode(authorization, token) ||
+				matchesAccessToken(authorization, token) ||
+				matchesRefreshToken(authorization, token);
+		} else if (OAuth2ParameterNames.STATE.equals(tokenType.getValue())) {
+			return matchesState(authorization, token);
+		} else if (OAuth2ParameterNames.CODE.equals(tokenType.getValue())) {
+			return matchesAuthorizationCode(authorization, token);
+		} else if (OAuth2TokenType.ACCESS_TOKEN.equals(tokenType)) {
+			return matchesAccessToken(authorization, token);
+		} else if (OAuth2TokenType.REFRESH_TOKEN.equals(tokenType)) {
+			return matchesRefreshToken(authorization, token);
 		}
 		return false;
 	}
 
-	private static class OAuth2AuthorizationId implements Serializable {
+	private static boolean matchesState(OAuth2Authorization authorization, String token) {
+		return token.equals(authorization.getAttribute(OAuth2ParameterNames.STATE));
+	}
 
-		private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
-		private final String registeredClientId;
-		private final String principalName;
+	private static boolean matchesAuthorizationCode(OAuth2Authorization authorization, String token) {
+		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode =
+			authorization.getToken(OAuth2AuthorizationCode.class);
+		return authorizationCode != null && authorizationCode.getToken().getTokenValue().equals(token);
+	}
 
-		private OAuth2AuthorizationId(String registeredClientId, String principalName) {
-			this.registeredClientId = registeredClientId;
-			this.principalName = principalName;
-		}
+	private static boolean matchesAccessToken(OAuth2Authorization authorization, String token) {
+		OAuth2Authorization.Token<OAuth2AccessToken> accessToken =
+			authorization.getToken(OAuth2AccessToken.class);
+		return accessToken != null && accessToken.getToken().getTokenValue().equals(token);
+	}
 
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null || getClass() != obj.getClass()) {
-				return false;
-			}
-			OAuth2AuthorizationId that = (OAuth2AuthorizationId) obj;
-			return Objects.equals(this.registeredClientId, that.registeredClientId) &&
-				Objects.equals(this.principalName, that.principalName);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(this.registeredClientId, this.principalName);
-		}
+	private static boolean matchesRefreshToken(OAuth2Authorization authorization, String token) {
+		OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken =
+			authorization.getToken(OAuth2RefreshToken.class);
+		return refreshToken != null && refreshToken.getToken().getTokenValue().equals(token);
 	}
 }

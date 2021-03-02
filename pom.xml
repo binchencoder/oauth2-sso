@@ -26,7 +26,7 @@
 		<java.version>1.8</java.version>
 		<!-- Spring -->
 		<org.spring-boot>2.4.0-M3</org.spring-boot>
-		<org.spring-security-experimental>0.0.3</org.spring-security-experimental>
+		<org.spring-security-experimental>0.1.0</org.spring-security-experimental>
 		<!-- Prometheus -->
 		<io.prometheus>0.0.15</io.prometheus>
 		<!-- Google Gson -->

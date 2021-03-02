@@ -115,7 +115,7 @@ public class AuthorizationController {
 		return Routes.LOGIN_DEFAULT;
 	}
 
-	@RequestMapping({Routes.OAUTH_LOGIN, Routes.OAUTH_FAILURE_HTML})
+	@RequestMapping({Routes.OAUTH_LOGIN, Routes.LOGIN, Routes.OAUTH_FAILURE_HTML})
 	public String getOAuthLogin(HttpServletRequest request, HttpServletResponse response,
 		@RequestParam(required = false) String display,
 		@RequestParam(required = false) String clientId,

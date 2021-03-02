@@ -56,6 +56,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.core.Authentication;
@@ -148,8 +149,8 @@ public class AuthorizationServerSecurityConfig extends WebSecurityConfigurerAdap
 
 		OAuth2AuthorizationServerConfigurer<HttpSecurity> authorizationServerConfigurer =
 				new OAuth2AuthorizationServerConfigurer<>();
-		List<RequestMatcher> requestMatchers = Lists.newCopyOnWriteArrayList(
-		  authorizationServerConfigurer.getEndpointMatchers());
+		List<RequestMatcher> requestMatchers = Lists.newArrayList(
+		  authorizationServerConfigurer.getEndpointsMatcher());
 		requestMatchers.add(JUsernamePasswordAuthenticationFilter.J_USERNAME_PASSWORD_REQUEST_MATCHER);
 		requestMatchers.add(new AntPathRequestMatcher(Routes.LOGOUT, RequestMethod.GET.toString()));
 

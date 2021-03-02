@@ -15,6 +15,9 @@ import com.binchencoder.oauth2.sso.service.JOAuth2AuthorizationService;
 import com.binchencoder.oauth2.sso.service.JRegisteredClientRepository;
 import com.binchencoder.oauth2.sso.service.JUserDetailsService;
 import com.google.common.collect.Lists;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -37,8 +40,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.keys.KeyManager;
-import org.springframework.security.crypto.keys.StaticKeyGeneratingKeyManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -88,8 +89,8 @@ public class Configurations {
 	}
 
 	@Bean
-	public KeyManager keyManager() {
-		return new StaticKeyGeneratingKeyManager();
+	public JWKSource jwkSource() {
+		return new ImmutableJWKSet(new JWKSet());
 	}
 
 	@Bean
