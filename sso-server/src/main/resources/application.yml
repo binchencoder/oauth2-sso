@@ -46,9 +46,9 @@ spring:
 
 logout:
   notifies:
-    urls: http://localhost:8080/logout
+    urls: http://127.0.0.1:8080/logout
 
 login:
   success:
     default:
-      target: http://localhost:8080/
+      target: http://127.0.0.1:8080/

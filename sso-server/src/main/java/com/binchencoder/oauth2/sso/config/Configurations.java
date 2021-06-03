@@ -3,6 +3,7 @@ package com.binchencoder.oauth2.sso.config;
 import static org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI;
 
 import com.binchencoder.oauth2.account.service.AuthnService;
+import com.binchencoder.oauth2.jose.Jwks;
 import com.binchencoder.oauth2.sso.authentication.JUserNamePasswordAuthenticationProvider;
 import com.binchencoder.oauth2.sso.handler.JAccessDeniedHandler;
 import com.binchencoder.oauth2.sso.handler.JAuthenticationEntryPoint;
@@ -16,8 +17,9 @@ import com.binchencoder.oauth2.sso.service.JRegisteredClientRepository;
 import com.binchencoder.oauth2.sso.service.JUserDetailsService;
 import com.google.common.collect.Lists;
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -47,6 +49,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.config.ProviderSettings;
 import org.springframework.security.oauth2.server.authorization.config.TokenSettings;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -89,16 +92,11 @@ public class Configurations {
 	}
 
 	@Bean
-	public JWKSource jwkSource() {
-		return new ImmutableJWKSet(new JWKSet());
-	}
-
-	@Bean
 	public RegisteredClientRepository registeredClientRepository() {
 		List<RegisteredClient> clients = Lists.newArrayList();
 		clients.add(RegisteredClient.withId(UUID.randomUUID().toString())
 			.clientId("messaging-client")
-			.clientSecret("secret")
+			.clientSecret(passwordEncoder().encode("secret"))
 			.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
 			.clientAuthenticationMethod(ClientAuthenticationMethod.POST)
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
@@ -107,15 +105,28 @@ public class Configurations {
 			.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 			.redirectUris(uris -> {
 				uris.add("http://www.baidu.com");
-				uris.add("http://localhost:8080/authorized");
+				uris.add("http://127.0.0.1:8080/authorized");
 			})
-//			.scope("message.read")
-//			.scope("message.write")
+			.scope("message.read")
+			.scope("message.write")
 			.clientSettings((client) -> new ClientSettings())
+//			.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
 			.tokenSettings((token) -> new TokenSettings().accessTokenTimeToLive(Duration.ofSeconds(20)))
 			.build());
 
 		return new JRegisteredClientRepository(clients);
+	}
+
+	@Bean
+	public JWKSource<SecurityContext> jwkSource() {
+		RSAKey rsaKey = Jwks.generateRsa();
+		JWKSet jwkSet = new JWKSet(rsaKey);
+		return (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
+	}
+
+	@Bean
+	public ProviderSettings providerSettings() {
+		return new ProviderSettings().issuer("http://auth-server:9000");
 	}
 
 	@Bean
