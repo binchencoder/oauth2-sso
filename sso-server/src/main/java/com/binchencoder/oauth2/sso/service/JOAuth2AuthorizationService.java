@@ -1,16 +1,17 @@
 package com.binchencoder.oauth2.sso.service;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.OAuth2TokenType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.util.Assert;
 
@@ -43,27 +44,27 @@ public class JOAuth2AuthorizationService implements OAuth2AuthorizationService {
 	@Override
 	public OAuth2Authorization findByToken(String token, OAuth2TokenType tokenType) {
 		Assert.hasText(token, "token cannot be empty");
-//		OAuth2Authorization auth = this.authorizations.values().stream()
-//			.filter(authorization -> hasToken(authorization, token, tokenType))
-//			.findFirst()
-//			.orElse(null);
-//		if (null == auth) {
-//			LOGGER.warn("Not found OAuth2Authorization by token:{}", token);
-//		}
-//
-//		OAuth2Authorization.Builder authBuilder = OAuth2Authorization.from(auth);
-//		// TODO(binchencoder): get from db
-//		Map<String, Object> addition = new HashMap<>();
-//		addition.put("userId", 179);
-//		addition.put("companyId", 10);
-//		authBuilder.attributes(u -> u.putAll(addition));
-//
-//		return authBuilder.build();
 
-		return this.authorizations.values().stream()
-			.filter(authorization -> hasToken(authorization, token, tokenType))
-			.findFirst()
-			.orElse(null);
+		OAuth2Authorization auth = null;
+		for (OAuth2Authorization authorization : this.authorizations.values()) {
+			if (hasToken(authorization, token, tokenType)) {
+				auth = authorization;
+				break;
+			}
+		}
+		if (null == auth) {
+			LOGGER.warn("Not found OAuth2Authorization by token:{}", token);
+			return null;
+		}
+
+		OAuth2Authorization.Builder authBuilder = OAuth2Authorization.from(auth);
+		// TODO(binchencoder): get from db
+		Map<String, Object> addition = new HashMap<>();
+		addition.put("userId", 179);
+		addition.put("companyId", 10);
+		authBuilder.attributes(u -> u.putAll(addition));
+
+		return authBuilder.build();
 	}
 
 	private static boolean hasToken(OAuth2Authorization authorization, String token,

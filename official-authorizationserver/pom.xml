@@ -67,9 +67,14 @@
 
     <!-- Spring Security OAuth2 Authorization Server -->
     <dependency>
-      <groupId>org.springframework.security.experimental</groupId>
+      <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-oauth2-authorization-server</artifactId>
     </dependency>
-  </dependencies>
+		<dependency>
+			<groupId>com.binchencoder.oauth2</groupId>
+			<artifactId>sso-server</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
 
 </project>

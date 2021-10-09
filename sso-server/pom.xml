@@ -67,7 +67,7 @@
 
     <!-- Spring Security OAuth2 Authorization Server -->
     <dependency>
-      <groupId>org.springframework.security.experimental</groupId>
+      <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-oauth2-authorization-server</artifactId>
     </dependency>
   </dependencies>

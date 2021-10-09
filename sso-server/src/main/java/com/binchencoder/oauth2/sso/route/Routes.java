@@ -38,6 +38,8 @@ public class Routes {
 
 	public static final String OAUTH_FAILURE = "/oauth/failure";
 
+	public static final String DEFAULT_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorize";
+
 	// return image/JPEG  begin
 	public static final String OIMAGES_AUTHCODE_JPG = "/images/authcode.jpg";
 	public static final String IMAGES_CAPTCHA_JPG = "images/captcha.jpg";

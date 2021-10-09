@@ -1,6 +1,6 @@
 package com.binchencoder.oauth2.sso.handler;
 
-import static org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI;
+import static com.binchencoder.oauth2.sso.route.Routes.DEFAULT_AUTHORIZATION_ENDPOINT_URI;
 
 import com.binchencoder.oauth2.sso.exception.AnotherUserLoginedAccessDeniedException;
 import com.binchencoder.oauth2.sso.exception.NotRequiredUserAccessDeniedException;

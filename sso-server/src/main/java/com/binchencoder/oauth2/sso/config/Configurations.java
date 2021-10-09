@@ -1,6 +1,6 @@
 package com.binchencoder.oauth2.sso.config;
 
-import static org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter.DEFAULT_AUTHORIZATION_ENDPOINT_URI;
+import static com.binchencoder.oauth2.sso.route.Routes.DEFAULT_AUTHORIZATION_ENDPOINT_URI;
 
 import com.binchencoder.oauth2.account.service.AuthnService;
 import com.binchencoder.oauth2.jose.Jwks;
@@ -97,8 +97,7 @@ public class Configurations {
 		clients.add(RegisteredClient.withId(UUID.randomUUID().toString())
 			.clientId("messaging-client")
 			.clientSecret(passwordEncoder().encode("secret"))
-			.clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
-			.clientAuthenticationMethod(ClientAuthenticationMethod.POST)
+			.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
 			.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 			.authorizationGrantType(AuthorizationGrantType.PASSWORD)
@@ -109,9 +108,8 @@ public class Configurations {
 			})
 			.scope("message.read")
 			.scope("message.write")
-			.clientSettings((client) -> new ClientSettings())
-//			.clientSettings(clientSettings -> clientSettings.requireUserConsent(true))
-			.tokenSettings((token) -> new TokenSettings().accessTokenTimeToLive(Duration.ofSeconds(20)))
+			.clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
+			.tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofSeconds(20)).build())
 			.build());
 
 		return new JRegisteredClientRepository(clients);
@@ -126,7 +124,7 @@ public class Configurations {
 
 	@Bean
 	public ProviderSettings providerSettings() {
-		return new ProviderSettings().issuer("http://auth-server:9000");
+		return ProviderSettings.builder().issuer("http://auth-server:9000").build();
 	}
 
 	@Bean
